@@ -19,6 +19,13 @@ interface DownloadHistory {
   type: string;
 }
 
+interface MediaOption {
+  id: 'video' | 'audio' | 'image';
+  label: string;
+  icon: string;
+  description: string;
+}
+
 export default function TikTokDownloader() {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,6 +34,29 @@ export default function TikTokDownloader() {
   const [darkMode, setDarkMode] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<'video' | 'audio' | 'image'>('video');
+  const [mediaOptions, setMediaOptions] = useState<MediaOption[]>([]);
+
+  const mediaTypes: MediaOption[] = [
+    {
+      id: 'video',
+      label: 'Video',
+      icon: '🎬',
+      description: 'Download video dengan kualitas HD'
+    },
+    {
+      id: 'audio',
+      label: 'Audio',
+      icon: '🎵',
+      description: 'Ekstrak audio saja (format MP3)'
+    },
+    {
+      id: 'image',
+      label: 'Gambar',
+      icon: '🖼️',
+      description: 'Download thumbnail/gambar'
+    }
+  ];
 
   // Load from localStorage
   useEffect(() => {
@@ -35,6 +65,9 @@ export default function TikTokDownloader() {
     
     if (savedTheme) setDarkMode(JSON.parse(savedTheme));
     if (savedHistory) setDownloadHistory(JSON.parse(savedHistory));
+    
+    // Set initial media options
+    setMediaOptions(mediaTypes);
   }, []);
 
   // Save to localStorage
@@ -45,23 +78,6 @@ export default function TikTokDownloader() {
   useEffect(() => {
     localStorage.setItem('downloadHistory', JSON.stringify(downloadHistory));
   }, [downloadHistory]);
-
-  // Auto download
-  useEffect(() => {
-    if (downloadData && downloadData.url) {
-      const newHistoryItem: DownloadHistory = {
-        id: Date.now().toString(),
-        url: downloadData.url,
-        title: downloadData.title || 'TikTok Video',
-        thumbnail: downloadData.thumbnail,
-        timestamp: downloadData.timestamp,
-        type: downloadData.type
-      };
-      
-      setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-      autoDownloadFile(downloadData.url, downloadData.type);
-    }
-  }, [downloadData]);
 
   const handleDownload = async () => {
     if (!url.trim()) {
@@ -74,13 +90,30 @@ export default function TikTokDownloader() {
     setDownloadData(null);
 
     try {
-      const response = await axios.post('/api/download', { url });
+      const response = await axios.post('/api/download', { 
+        url,
+        mediaType: selectedMedia 
+      });
       
       if (response.data.success) {
-        setDownloadData({
+        const downloadItem = {
           ...response.data.data,
           timestamp: Date.now()
-        });
+        };
+        
+        setDownloadData(downloadItem);
+        
+        // Add to history
+        const newHistoryItem: DownloadHistory = {
+          id: Date.now().toString(),
+          url: downloadItem.url,
+          title: downloadItem.title || 'TikTok Media',
+          thumbnail: downloadItem.thumbnail,
+          timestamp: downloadItem.timestamp,
+          type: downloadItem.type
+        };
+        
+        setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
       } else {
         setError(response.data.error || 'Gagal mengambil data');
       }
@@ -91,18 +124,22 @@ export default function TikTokDownloader() {
     }
   };
 
-  const autoDownloadFile = async (downloadUrl: string, type: 'video' | 'image' | 'audio') => {
+  const handleFileDownload = async (downloadUrl: string, filename: string) => {
     try {
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
         setError('URL download tidak valid');
         return;
       }
 
-      const fileExtension = type === 'video' ? 'mp4' : type === 'audio' ? 'mp3' : 'jpg';
-      const filename = `tiktok-${Date.now()}.${fileExtension}`;
+      // Show loading for download
+      const downloadBtn = document.getElementById('download-btn');
+      if (downloadBtn) {
+        downloadBtn.innerHTML = '⬇️ Mengunduh...';
+        downloadBtn.setAttribute('disabled', 'true');
+      }
 
       const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Failed to fetch video');
+      if (!response.ok) throw new Error('Failed to fetch media');
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -118,10 +155,29 @@ export default function TikTokDownloader() {
 
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
+      // Reset button
+      if (downloadBtn) {
+        downloadBtn.innerHTML = '⬇️ Download Ulang';
+        downloadBtn.removeAttribute('disabled');
+      }
+
     } catch (err: any) {
-      console.error('Auto download error:', err);
+      console.error('Download error:', err);
+      setError('Gagal mengunduh file: ' + err.message);
+      
+      // Fallback: open in new tab
       window.open(downloadUrl, '_blank');
     }
+  };
+
+  const getFilename = (type: string, title?: string) => {
+    const baseName = title ? title.replace(/[^a-zA-Z0-9]/g, '_') : 'tiktok';
+    const extensions = {
+      video: 'mp4',
+      audio: 'mp3',
+      image: 'jpg'
+    };
+    return `${baseName}_${Date.now()}.${extensions[type as keyof typeof extensions] || 'mp4'}`;
   };
 
   const clearHistory = () => {
@@ -130,6 +186,15 @@ export default function TikTokDownloader() {
 
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleString('id-ID');
+  };
+
+  const getMediaIcon = (type: string) => {
+    switch (type) {
+      case 'video': return '🎬';
+      case 'audio': return '🎵';
+      case 'image': return '🖼️';
+      default: return '📁';
+    }
   };
 
   return (
@@ -166,8 +231,35 @@ export default function TikTokDownloader() {
           {/* Main Content */}
           <div className="main-content">
             <p className="subtitle">
-              Download video TikTok tanpa watermark • Cepat & Gratis
+              Download video, audio, dan gambar dari TikTok • Cepat & Gratis
             </p>
+
+            {/* Media Type Selection */}
+            <div className="card">
+              <h3 className="success-title" style={{ textAlign: 'center', marginBottom: '20px' }}>
+                📁 Pilih Jenis Media
+              </h3>
+              
+              <div className="features-grid">
+                {mediaTypes.map((media) => (
+                  <div 
+                    key={media.id}
+                    className={`feature-card ${selectedMedia === media.id ? 'selected-media' : ''}`}
+                    style={{
+                      border: selectedMedia === media.id ? '2px solid #00f2ea' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: selectedMedia === media.id ? 'rgba(0, 242, 234, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onClick={() => setSelectedMedia(media.id)}
+                  >
+                    <div className="feature-icon">{media.icon}</div>
+                    <h4 className="feature-title">{media.label}</h4>
+                    <p className="feature-desc">{media.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Input Section */}
             <div className="card">
@@ -190,7 +282,7 @@ export default function TikTokDownloader() {
                       Memproses...
                     </div>
                   ) : (
-                    '🚀 Download Now'
+                    `🚀 Download ${selectedMedia === 'video' ? 'Video' : selectedMedia === 'audio' ? 'Audio' : 'Gambar'}`
                   )}
                 </button>
               </div>
@@ -208,21 +300,42 @@ export default function TikTokDownloader() {
               <div className="card">
                 <div className="success-header">
                   <div className="success-icon">✅</div>
-                  <h3 className="success-title">Download Berhasil!</h3>
+                  <h3 className="success-title">
+                    {downloadData.type === 'video' ? 'Video' : 
+                     downloadData.type === 'audio' ? 'Audio' : 'Gambar'} Siap Download!
+                  </h3>
                 </div>
                 
-                {downloadData.thumbnail && (
+                {downloadData.thumbnail && downloadData.type !== 'audio' && (
                   <div className="thumbnail">
                     <img src={downloadData.thumbnail} alt="Thumbnail" />
                   </div>
                 )}
 
+                {downloadData.type === 'audio' && (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '20px',
+                    background: 'rgba(0, 242, 234, 0.1)',
+                    borderRadius: '10px',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎵</div>
+                    <p style={{ color: 'white', margin: 0 }}>Audio siap untuk diunduh</p>
+                  </div>
+                )}
+
                 <div className="action-buttons">
                   <button
-                    onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
+                    id="download-btn"
+                    onClick={() => handleFileDownload(
+                      downloadData.url, 
+                      getFilename(downloadData.type, downloadData.title)
+                    )}
                     className="btn-success"
                   >
-                    ⬇️ Download Ulang
+                    ⬇️ Download {downloadData.type === 'video' ? 'Video' : 
+                               downloadData.type === 'audio' ? 'Audio' : 'Gambar'}
                   </button>
 
                   <a
@@ -241,10 +354,17 @@ export default function TikTokDownloader() {
                   </p>
                 )}
 
-                <div className="download-status">
-                  <span style={{ color: '#00f2ea' }}>⚡</span>
-                  <span>Video sedang didownload otomatis...</span>
-                </div>
+                {downloadData.duration && downloadData.type === 'video' && (
+                  <p style={{
+                    marginTop: '10px',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '14px',
+                    textAlign: 'center'
+                  }}>
+                    ⏱️ Durasi: {Math.floor(downloadData.duration / 60)}:
+                    {(downloadData.duration % 60).toString().padStart(2, '0')}
+                  </p>
+                )}
               </div>
             )}
 
@@ -257,9 +377,9 @@ export default function TikTokDownloader() {
               <div className="features-grid">
                 {[
                   { icon: '🚀', title: 'Super Cepat', desc: 'Proses download dalam hitungan detik' },
-                  { icon: '🎨', title: 'HD Quality', desc: 'Video berkualitas tinggi tanpa watermark' },
-                  { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' },
-                  { icon: '📱', title: 'All Devices', desc: 'Bisa di desktop dan mobile' }
+                  { icon: '🎨', title: 'HD Quality', desc: 'Kualitas terbaik tanpa watermark' },
+                  { icon: '🎵', title: 'Multiple Format', desc: 'Video, audio, dan gambar' },
+                  { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' }
                 ].map((feature, index) => (
                   <div key={index} className="feature-card">
                     <div className="feature-icon">{feature.icon}</div>
@@ -299,12 +419,26 @@ export default function TikTokDownloader() {
                       onClick={() => window.open(item.url, '_blank')}
                     >
                       <div className="history-content">
-                        {item.thumbnail && (
+                        {item.thumbnail && item.type !== 'audio' && (
                           <img 
                             src={item.thumbnail} 
                             alt="Thumb"
                             className="history-thumb"
                           />
+                        )}
+                        {item.type === 'audio' && (
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            background: 'rgba(0, 242, 234, 0.2)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px'
+                          }}>
+                            🎵
+                          </div>
                         )}
                         <div className="history-details">
                           <p className="history-item-title">
@@ -314,7 +448,7 @@ export default function TikTokDownloader() {
                             {formatTime(item.timestamp)}
                           </p>
                           <p className="history-type">
-                            {item.type.toUpperCase()}
+                            {getMediaIcon(item.type)} {item.type.toUpperCase()}
                           </p>
                         </div>
                       </div>
@@ -331,6 +465,20 @@ export default function TikTokDownloader() {
           <p>© 2024 TikTok Downloader • Made with ❤️ for content creators</p>
         </div>
       </div>
+
+      <style jsx>{`
+        .selected-media {
+          transform: scale(1.05);
+        }
+        
+        .feature-card {
+          transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+          transform: translateY(-5px);
+        }
+      `}</style>
     </div>
   );
-  }
+    }
