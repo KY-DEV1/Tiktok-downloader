@@ -24,24 +24,17 @@ export default function TikTokDownloader() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloadData, setDownloadData] = useState<DownloadData | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
 
   // Load from localStorage
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-
     const savedTheme = localStorage.getItem('darkMode');
     const savedHistory = localStorage.getItem('downloadHistory');
     
     if (savedTheme) setDarkMode(JSON.parse(savedTheme));
     if (savedHistory) setDownloadHistory(JSON.parse(savedHistory));
-
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Save to localStorage
@@ -139,95 +132,43 @@ export default function TikTokDownloader() {
     return new Date(timestamp).toLocaleString('id-ID');
   };
 
-  // Theme colors - SIMPLIFIED
-  const theme = {
-    background: darkMode 
-      ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' 
-      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    cardBg: darkMode ? 'rgba(30, 30, 40, 0.8)' : 'rgba(255, 255, 255, 0.1)',
-    text: 'white',
-    textMuted: darkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-    border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
-    buttonBg: 'linear-gradient(45deg, #ff0050, #ff0080)',
-    successBg: 'linear-gradient(45deg, #00f2ea, #00b894)',
-    secondaryBg: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'
-  };
+  // Background colors based on theme
+  const backgroundColor = darkMode 
+    ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' 
+    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 
-  // SIMPLE STYLES
-  const containerStyle = {
-    minHeight: '100vh',
-    background: theme.background,
-    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-    padding: '20px',
-    transition: 'all 0.3s ease'
-  };
+  const cardBackground = darkMode 
+    ? 'rgba(30, 30, 40, 0.8)' 
+    : 'rgba(255, 255, 255, 0.1)';
 
-  const mainContainerStyle = {
-    maxWidth: '1000px',
-    margin: '0 auto',
-    padding: '20px'
-  };
-
-  const topBarStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
-    flexWrap: 'wrap' as const,
-    gap: '15px'
-  };
-
-  const titleStyle = {
-    fontSize: isMobile ? '1.8rem' : '2.5rem',
-    fontWeight: '800',
-    background: 'linear-gradient(45deg, #fff, #e0e7ff)',
-    WebkitBackgroundClip: 'text' as const,
-    WebkitTextFillColor: 'transparent' as const,
-    margin: 0
-  };
-
-  const cardStyle = {
-    background: theme.cardBg,
-    backdropFilter: 'blur(10px)',
-    borderRadius: '20px',
-    padding: '30px',
-    marginBottom: '30px',
-    border: theme.border,
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-  };
-
-  const inputStyle = {
-    flex: 1,
-    padding: '16px 20px',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '16px',
-    background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
-    color: darkMode ? 'white' : 'black',
-    backdropFilter: 'blur(10px)',
-    outline: 'none',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
-  };
-
-  const buttonStyle = {
-    padding: '16px 32px',
-    background: loading ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' : theme.buttonBg,
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    cursor: loading ? 'not-allowed' : 'pointer',
-    fontSize: '16px',
-    fontWeight: '600',
-    minWidth: '140px',
-    opacity: loading ? 0.7 : 1
-  };
+  const textColor = 'white';
+  const borderColor = darkMode 
+    ? '1px solid rgba(255, 255, 255, 0.1)' 
+    : '1px solid rgba(255, 255, 255, 0.2)';
 
   return (
-    <div style={containerStyle}>
-      <div style={mainContainerStyle}>
+    <div style={{
+      minHeight: '100vh',
+      background: backgroundColor,
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      padding: '20px',
+      transition: 'all 0.3s ease'
+    }}>
+      <div style={{
+        maxWidth: '1000px',
+        margin: '0 auto',
+        padding: '20px'
+      }}>
         
         {/* Top Bar */}
-        <div style={topBarStyle}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '30px',
+          flexWrap: 'wrap',
+          gap: '15px'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
             <div style={{
               width: '50px',
@@ -243,7 +184,16 @@ export default function TikTokDownloader() {
             }}>
               ⬇️
             </div>
-            <h1 style={titleStyle}>TikTok Downloader</h1>
+            <h1 style={{
+              fontSize: '2.5rem',
+              fontWeight: '800',
+              background: 'linear-gradient(45deg, #fff, #e0e7ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              margin: 0
+            }}>
+              TikTok Downloader
+            </h1>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -251,9 +201,9 @@ export default function TikTokDownloader() {
               onClick={() => setShowHistory(!showHistory)}
               style={{
                 padding: '12px 20px',
-                background: theme.secondaryBg,
-                color: theme.text,
-                border: theme.border,
+                background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+                color: textColor,
+                border: borderColor,
                 borderRadius: '10px',
                 cursor: 'pointer',
                 fontSize: '14px',
@@ -271,9 +221,9 @@ export default function TikTokDownloader() {
               onClick={() => setDarkMode(!darkMode)}
               style={{
                 padding: '12px 20px',
-                background: theme.secondaryBg,
-                color: theme.text,
-                border: theme.border,
+                background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+                color: textColor,
+                border: borderColor,
                 borderRadius: '10px',
                 cursor: 'pointer',
                 fontSize: '14px',
@@ -299,8 +249,8 @@ export default function TikTokDownloader() {
           {/* Main Content */}
           <div>
             <p style={{
-              fontSize: isMobile ? '1rem' : '1.1rem',
-              color: theme.textMuted,
+              fontSize: '1.1rem',
+              color: 'rgba(255, 255, 255, 0.8)',
               marginBottom: '30px',
               fontWeight: '300',
               textAlign: 'center'
@@ -309,24 +259,54 @@ export default function TikTokDownloader() {
             </p>
 
             {/* Input Section */}
-            <div style={cardStyle}>
+            <div style={{
+              background: cardBackground,
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '30px',
+              marginBottom: '30px',
+              border: borderColor,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+            }}>
               <div style={{
                 display: 'flex',
                 gap: '15px',
                 marginBottom: '15px',
-                flexDirection: isMobile ? 'column' : 'row'
+                flexDirection: 'row'
               }}>
                 <input
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="🔗 Paste URL TikTok di sini (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
-                  style={inputStyle}
+                  style={{
+                    flex: 1,
+                    padding: '16px 20px',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+                    color: darkMode ? 'white' : 'black',
+                    outline: 'none'
+                  }}
                 />
                 <button
                   onClick={handleDownload}
                   disabled={loading}
-                  style={buttonStyle}
+                  style={{
+                    padding: '16px 32px',
+                    background: loading 
+                      ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' 
+                      : 'linear-gradient(45deg, #ff0050, #ff0080)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    minWidth: '140px',
+                    opacity: loading ? 0.7 : 1
+                  }}
                 >
                   {loading ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -366,7 +346,15 @@ export default function TikTokDownloader() {
 
             {/* Result Section */}
             {downloadData && (
-              <div style={cardStyle}>
+              <div style={{
+                background: cardBackground,
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '30px',
+                marginBottom: '30px',
+                border: borderColor,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+              }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -376,7 +364,7 @@ export default function TikTokDownloader() {
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    background: theme.successBg,
+                    background: 'linear-gradient(45deg, #00f2ea, #00b894)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -387,9 +375,9 @@ export default function TikTokDownloader() {
                     ✅
                   </div>
                   <h3 style={{
-                    fontSize: isMobile ? '1.3rem' : '1.5rem',
+                    fontSize: '1.5rem',
                     fontWeight: '600',
-                    color: theme.text,
+                    color: textColor,
                     margin: 0
                   }}>
                     Download Berhasil!
@@ -425,7 +413,7 @@ export default function TikTokDownloader() {
                     onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
                     style={{
                       padding: '12px 24px',
-                      background: theme.successBg,
+                      background: 'linear-gradient(45deg, #00f2ea, #00b894)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '10px',
@@ -446,8 +434,8 @@ export default function TikTokDownloader() {
                     rel="noopener noreferrer"
                     style={{
                       padding: '12px 24px',
-                      background: theme.secondaryBg,
-                      color: theme.text,
+                      background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
+                      color: textColor,
                       textDecoration: 'none',
                       borderRadius: '10px',
                       fontSize: '14px',
@@ -455,7 +443,7 @@ export default function TikTokDownloader() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      border: theme.border
+                      border: borderColor
                     }}
                   >
                     🔗 Buka di Tab Baru
@@ -465,7 +453,7 @@ export default function TikTokDownloader() {
                 {downloadData.title && (
                   <p style={{
                     marginTop: '10px',
-                    color: theme.textMuted,
+                    color: 'rgba(255, 255, 255, 0.8)',
                     fontStyle: 'italic',
                     fontSize: '14px',
                     textAlign: 'center'
@@ -486,7 +474,7 @@ export default function TikTokDownloader() {
                   justifyContent: 'center'
                 }}>
                   <span style={{ color: '#00f2ea' }}>⚡</span>
-                  <span style={{ color: theme.text, fontSize: '14px' }}>
+                  <span style={{ color: textColor, fontSize: '14px' }}>
                     Video sedang didownload otomatis...
                   </span>
                 </div>
@@ -494,12 +482,18 @@ export default function TikTokDownloader() {
             )}
 
             {/* Features Section */}
-            <div style={cardStyle}>
+            <div style={{
+              background: cardBackground,
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '30px',
+              border: borderColor
+            }}>
               <h3 style={{
-                color: theme.text,
+                color: textColor,
                 textAlign: 'center',
                 marginBottom: '25px',
-                fontSize: isMobile ? '1.3rem' : '1.5rem',
+                fontSize: '1.5rem',
                 fontWeight: '600'
               }}>
                 🎯 Kenapa Pilih Kami?
@@ -507,7 +501,7 @@ export default function TikTokDownloader() {
               
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                 gap: '20px'
               }}>
                 {[
@@ -521,15 +515,15 @@ export default function TikTokDownloader() {
                     padding: '20px',
                     borderRadius: '15px',
                     textAlign: 'center',
-                    border: theme.border
+                    border: borderColor
                   }}>
                     <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
                       {feature.icon}
                     </div>
-                    <h4 style={{ color: theme.text, margin: '0 0 8px 0', fontSize: '1.1rem' }}>
+                    <h4 style={{ color: textColor, margin: '0 0 8px 0', fontSize: '1.1rem' }}>
                       {feature.title}
                     </h4>
-                    <p style={{ color: theme.textMuted, margin: 0, fontSize: '0.9rem' }}>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: 0, fontSize: '0.9rem' }}>
                       {feature.desc}
                     </p>
                   </div>
@@ -541,11 +535,11 @@ export default function TikTokDownloader() {
           {/* History Sidebar */}
           {showHistory && (
             <div style={{
-              background: theme.cardBg,
+              background: cardBackground,
               backdropFilter: 'blur(10px)',
               borderRadius: '20px',
               padding: '20px',
-              border: theme.border,
+              border: borderColor,
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               maxHeight: '80vh',
               overflow: 'hidden',
@@ -558,9 +552,9 @@ export default function TikTokDownloader() {
                 alignItems: 'center',
                 marginBottom: '20px',
                 paddingBottom: '15px',
-                borderBottom: theme.border
+                borderBottom: borderColor
               }}>
-                <h3 style={{ color: theme.text, margin: 0, fontSize: '1.2rem' }}>
+                <h3 style={{ color: textColor, margin: 0, fontSize: '1.2rem' }}>
                   📜 Riwayat Download
                 </h3>
                 {downloadHistory.length > 0 && (
@@ -586,18 +580,11 @@ export default function TikTokDownloader() {
                 {downloadHistory.length === 0 ? (
                   <div style={{ 
                     textAlign: 'center', 
-                    color: theme.textMuted, 
+                    color: 'rgba(255, 255, 255, 0.6)', 
                     padding: '40px 20px',
                     fontSize: '14px'
                   }}>
                     📝 Belum ada riwayat download
                   </div>
                 ) : (
-                  downloadHistory.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-                        padding: '15px',
-                        borderRadius: '10px',
-                        marginB
+            
