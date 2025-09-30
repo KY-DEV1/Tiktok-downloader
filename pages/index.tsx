@@ -149,116 +149,118 @@ export default function TikTokDownloader() {
   };
 
   const handleFileDownload = async (downloadUrl: string, filename: string) => {
-    try {
-      if (!downloadUrl || !downloadUrl.startsWith('http')) {
-        setDownloadError('URL download tidak valid');
-        return;
-      }
-
-      // Reset error dan set downloading state
-      setDownloadError('');
-      setIsDownloading(true);
-
-      // Show loading for download
-      const downloadBtn = document.getElementById('download-btn');
-      const originalText = downloadBtn?.innerHTML;
-      if (downloadBtn) {
-        downloadBtn.innerHTML = '⬇️ Mengunduh...';
-        downloadBtn.setAttribute('disabled', 'true');
-      }
-
-      // Use fetch dengan timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-      console.log('Starting download from:', downloadUrl);
-
-      const response = await fetch(downloadUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': '*/*',
-          'Referer': 'https://www.tiktok.com/'
-        }
-      });
-      
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Server mengembalikan error: ${response.status} ${response.statusText}`);
-      }
-
-      const blob = await response.blob();
-      
-      // Check if blob is valid
-      if (blob.size === 0) {
-        throw new Error('File yang didownload kosong (0 bytes)');
-      }
-
-      // Check file type
-      const fileType = blob.type;
-      if (fileType.includes('text/html') || fileType.includes('application/json')) {
-        throw new Error('URL mengembalikan halaman web, bukan file media');
-      }
-
-      console.log('Download successful, file size:', blob.size, 'bytes');
-
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-      }, 1000);
-
-      // Success feedback
-      setDownloadError('');
-
-    } catch (err: any) {
-      console.error('Download error:', err);
-      
-      let errorMessage = 'Gagal mengunduh file: ';
-      
-      if (err.name === 'AbortError') {
-        errorMessage += 'Download timeout (45 detik). File mungkin terlalu besar atau koneksi lambat.';
-      } else if (err.message.includes('Failed to fetch')) {
-        errorMessage += 'Tidak dapat terhubung ke server. Cek koneksi internet Anda.';
-      } else if (err.message.includes('CORS')) {
-        errorMessage += 'Terhalang oleh kebijakan keamanan browser.';
-      } else if (err.message.includes('0 bytes')) {
-        errorMessage += 'File yang didownload kosong. URL mungkin tidak valid.';
-      } else if (err.message.includes('halaman web')) {
-        errorMessage += 'URL mengarah ke halaman web, bukan file media.';
-      } else {
-        errorMessage += err.message || 'Unknown error occurred';
-      }
-      
-      setDownloadError(errorMessage);
-      
-      // Fallback: open in new tab
-      console.log('Trying fallback: open in new tab');
-      window.open(downloadUrl, '_blank');
-      
-    } finally {
-      // Reset states
-      setIsDownloading(false);
-      
-      // Reset button
-      const downloadBtn = document.getElementById('download-btn');
-      if (downloadBtn) {
-        downloadBtn.innerHTML = originalText || '⬇️ Download Ulang';
-        downloadBtn.removeAttribute('disabled');
-      }
+  let originalText = ''; // Deklarasi variable di luar try-catch
+  
+  try {
+    if (!downloadUrl || !downloadUrl.startsWith('http')) {
+      setDownloadError('URL download tidak valid');
+      return;
     }
-  };
+
+    // Reset error dan set downloading state
+    setDownloadError('');
+    setIsDownloading(true);
+
+    // Show loading for download
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+      originalText = downloadBtn.innerHTML; // Simpan text asli
+      downloadBtn.innerHTML = '⬇️ Mengunduh...';
+      downloadBtn.setAttribute('disabled', 'true');
+    }
+
+    // Use fetch dengan timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    console.log('Starting download from:', downloadUrl);
+
+    const response = await fetch(downloadUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': '*/*',
+        'Referer': 'https://www.tiktok.com/'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Server mengembalikan error: ${response.status} ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    
+    // Check if blob is valid
+    if (blob.size === 0) {
+      throw new Error('File yang didownload kosong (0 bytes)');
+    }
+
+    // Check file type
+    const fileType = blob.type;
+    if (fileType.includes('text/html') || fileType.includes('application/json')) {
+      throw new Error('URL mengembalikan halaman web, bukan file media');
+    }
+
+    console.log('Download successful, file size:', blob.size, 'bytes');
+
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Cleanup
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 1000);
+
+    // Success feedback
+    setDownloadError('');
+
+  } catch (err: any) {
+    console.error('Download error:', err);
+    
+    let errorMessage = 'Gagal mengunduh file: ';
+    
+    if (err.name === 'AbortError') {
+      errorMessage += 'Download timeout (45 detik). File mungkin terlalu besar atau koneksi lambat.';
+    } else if (err.message.includes('Failed to fetch')) {
+      errorMessage += 'Tidak dapat terhubung ke server. Cek koneksi internet Anda.';
+    } else if (err.message.includes('CORS')) {
+      errorMessage += 'Terhalang oleh kebijakan keamanan browser.';
+    } else if (err.message.includes('0 bytes')) {
+      errorMessage += 'File yang didownload kosong. URL mungkin tidak valid.';
+    } else if (err.message.includes('halaman web')) {
+      errorMessage += 'URL mengarah ke halaman web, bukan file media.';
+    } else {
+      errorMessage += err.message || 'Unknown error occurred';
+    }
+    
+    setDownloadError(errorMessage);
+    
+    // Fallback: open in new tab
+    console.log('Trying fallback: open in new tab');
+    window.open(downloadUrl, '_blank');
+    
+  } finally {
+    // Reset states
+    setIsDownloading(false);
+    
+    // Reset button
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+      downloadBtn.innerHTML = originalText || '⬇️ Download Ulang';
+      downloadBtn.removeAttribute('disabled');
+    }
+  }
+};
 
   // Function untuk download semua images
   const downloadAllImages = async (images: string[], title: string) => {
