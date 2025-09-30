@@ -16,22 +16,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cleanUrl = url.trim();
     console.log('Processing URL:', cleanUrl, 'Media type:', mediaType);
 
-    // Gunakan API yang benar-benar reliable
-    const result = await getTikTokMedia(cleanUrl, mediaType);
+    // Gunakan API yang lebih reliable
+    const result = await getTikTokMedia(cleanUrl);
     
     if (!result.downloadUrl) {
       return res.status(404).json({ success: false, error: 'Tidak dapat mengambil media dari URL tersebut' });
     }
 
-    res.json({
-      success: true,
-      data: {
-        type: result.type,
+    // Filter berdasarkan media type yang diminta
+    let finalResult;
+    if (mediaType === 'video') {
+      finalResult = {
+        type: 'video' as const,
         url: result.downloadUrl,
         thumbnail: result.thumbnailUrl,
         title: result.title,
         duration: result.duration
-      }
+      };
+    } else if (mediaType === 'audio' && result.audioUrl) {
+      finalResult = {
+        type: 'audio' as const,
+        url: result.audioUrl,
+        thumbnail: result.thumbnailUrl,
+        title: result.title,
+        duration: result.duration
+      };
+    } else if (mediaType === 'image' && result.thumbnailUrl) {
+      finalResult = {
+        type: 'image' as const,
+        url: result.thumbnailUrl,
+        thumbnail: result.thumbnailUrl,
+        title: result.title,
+        duration: result.duration
+      };
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Media type ${mediaType} tidak tersedia untuk video ini` 
+      });
+    }
+
+    res.json({
+      success: true,
+      data: finalResult
     });
 
   } catch (error: any) {
@@ -43,42 +70,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// FUNCTION UTAMA YANG SUPPORT SEMUA MEDIA TYPE
-async function getTikTokMedia(url: string, mediaType: string): Promise<{
+// FUNCTION UTAMA - Dapatkan semua media yang available
+async function getTikTokMedia(url: string): Promise<{
   downloadUrl: string;
+  audioUrl?: string;
   thumbnailUrl: string;
   title: string;
-  type: 'video' | 'image' | 'audio';
   duration?: number;
 }> {
   
   const apis = [
-    // API 1: TikWM (Paling Reliable)
+    // API 1: TikWM - Support video, audio, dan images
     {
       name: 'tikwm',
       url: `https://www.tikwm.com/api/`,
       method: 'POST' as const,
       data: { url: url },
-      parser: (data: any, type: string) => {
+      parser: (data: any) => {
         if (data.data) {
           let downloadUrl = '';
-          let thumbnailUrl = data.data.cover ? `https://www.tikwm.com${data.data.cover}` : '';
+          let audioUrl = '';
+          let thumbnailUrl = '';
           
-          if (type === 'video' && data.data.play) {
-            downloadUrl = `https://www.tikwm.com${data.data.play}`;
-          } else if (type === 'audio' && data.data.music) {
-            downloadUrl = `https://www.tikwm.com${data.data.music}`;
-          } else if (type === 'image' && data.data.images) {
-            // Untuk images, ambil gambar pertama
-            downloadUrl = `https://www.tikwm.com${data.data.images[0]}`;
+          // Video URL
+          if (data.data.play) {
+            downloadUrl = data.data.play.startsWith('http') 
+              ? data.data.play 
+              : `https://www.tikwm.com${data.data.play}`;
+          }
+          
+          // Audio URL
+          if (data.data.music) {
+            audioUrl = data.data.music.startsWith('http')
+              ? data.data.music
+              : `https://www.tikwm.com${data.data.music}`;
+          }
+          
+          // Thumbnail URL
+          if (data.data.cover) {
+            thumbnailUrl = data.data.cover.startsWith('http')
+              ? data.data.cover
+              : `https://www.tikwm.com${data.data.cover}`;
           }
 
-          if (downloadUrl) {
+          if (downloadUrl || audioUrl || thumbnailUrl) {
             return {
               downloadUrl: downloadUrl,
+              audioUrl: audioUrl,
               thumbnailUrl: thumbnailUrl,
-              title: data.data.title || 'TikTok Media',
-              type: type as 'video' | 'image' | 'audio',
+              title: data.data.title || 'TikTok Video',
               duration: data.data.duration
             };
           }
@@ -86,28 +126,35 @@ async function getTikTokMedia(url: string, mediaType: string): Promise<{
         return null;
       }
     },
-    // API 2: TikTok Downloader API
+    // API 2: Alternative API
     {
-      name: 'tiktok-downloader',
-      url: `https://api.tiktokdownload.org/video/?url=${encodeURIComponent(url)}`,
-      method: 'GET' as const,
-      parser: (data: any, type: string) => {
-        let downloadUrl = '';
-        
-        if (type === 'video' && data.video_url) {
-          downloadUrl = data.video_url;
-        } else if (type === 'audio' && data.music_url) {
-          downloadUrl = data.music_url;
-        } else if (type === 'image' && data.cover_url) {
-          downloadUrl = data.cover_url;
-        }
-
-        if (downloadUrl) {
+      name: 'snaptik',
+      url: `https://snaptik.app/action.php`,
+      method: 'POST' as const,
+      data: { url: url },
+      parser: (data: any) => {
+        if (data.url) {
           return {
-            downloadUrl: downloadUrl,
-            thumbnailUrl: data.cover_url || '',
-            title: data.title || 'TikTok Media',
-            type: type as 'video' | 'image' | 'audio',
+            downloadUrl: data.url,
+            thumbnailUrl: data.thumbnail || '',
+            title: data.title || 'TikTok Video',
+            duration: data.duration
+          };
+        }
+        return null;
+      }
+    },
+    // API 3: Simple TikTok API
+    {
+      name: 'tikmate',
+      url: `https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`,
+      method: 'GET' as const,
+      parser: (data: any) => {
+        if (data.url) {
+          return {
+            downloadUrl: data.url,
+            thumbnailUrl: data.thumbnail || '',
+            title: data.title || 'TikTok Video',
             duration: data.duration
           };
         }
@@ -118,7 +165,7 @@ async function getTikTokMedia(url: string, mediaType: string): Promise<{
 
   for (const api of apis) {
     try {
-      console.log(`Trying API: ${api.name} for ${mediaType}`);
+      console.log(`Trying API: ${api.name}`);
       
       const config: any = {
         method: api.method,
@@ -136,7 +183,7 @@ async function getTikTokMedia(url: string, mediaType: string): Promise<{
       }
 
       const response = await axios(config);
-      const result = api.parser(response.data, mediaType);
+      const result = api.parser(response.data);
       
       if (result) {
         console.log(`Success with API: ${api.name}`);
@@ -148,5 +195,5 @@ async function getTikTokMedia(url: string, mediaType: string): Promise<{
     }
   }
 
-  throw new Error(`Tidak dapat mengambil ${mediaType} dari URL tersebut`);
+  throw new Error('Semua API gagal mengambil data TikTok');
         }
