@@ -80,96 +80,135 @@ export default function TikTokDownloader() {
   }, [downloadHistory]);
 
   const handleDownload = async () => {
-    if (!url.trim()) {
-      setError('Masukkan URL TikTok');
+  if (!url.trim()) {
+    setError('Masukkan URL TikTok');
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+  setDownloadData(null);
+
+  try {
+    const response = await axios.post('/api/download', { 
+      url,
+      mediaType: selectedMedia 
+    });
+    
+    if (response.data.success) {
+      const downloadItem = {
+        ...response.data.data,
+        timestamp: Date.now()
+      };
+      
+      setDownloadData(downloadItem);
+      
+      // Add to history
+      const newHistoryItem: DownloadHistory = {
+        id: Date.now().toString(),
+        url: downloadItem.url,
+        title: downloadItem.title || 'TikTok Media',
+        thumbnail: downloadItem.thumbnail,
+        timestamp: downloadItem.timestamp,
+        type: downloadItem.type
+      };
+      
+      setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
+    } else {
+      setError(response.data.error || 'Gagal mengambil data');
+    }
+  } catch (err: any) {
+    console.error('Download error:', err);
+    if (err.response?.data?.error) {
+      setError(err.response.data.error);
+    } else {
+      setError('Terjadi kesalahan saat memproses video');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleFileDownload = async (downloadUrl: string, filename: string) => {
+  try {
+    if (!downloadUrl || !downloadUrl.startsWith('http')) {
+      setError('URL download tidak valid');
       return;
     }
 
-    setLoading(true);
-    setError('');
-    setDownloadData(null);
-
-    try {
-      const response = await axios.post('/api/download', { 
-        url,
-        mediaType: selectedMedia 
-      });
-      
-      if (response.data.success) {
-        const downloadItem = {
-          ...response.data.data,
-          timestamp: Date.now()
-        };
-        
-        setDownloadData(downloadItem);
-        
-        // Add to history
-        const newHistoryItem: DownloadHistory = {
-          id: Date.now().toString(),
-          url: downloadItem.url,
-          title: downloadItem.title || 'TikTok Media',
-          thumbnail: downloadItem.thumbnail,
-          timestamp: downloadItem.timestamp,
-          type: downloadItem.type
-        };
-        
-        setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-      } else {
-        setError(response.data.error || 'Gagal mengambil data');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Terjadi kesalahan');
-    } finally {
-      setLoading(false);
+    // Show loading for download
+    const downloadBtn = document.getElementById('download-btn');
+    const originalText = downloadBtn?.innerHTML;
+    if (downloadBtn) {
+      downloadBtn.innerHTML = '⬇️ Mengunduh...';
+      downloadBtn.setAttribute('disabled', 'true');
     }
-  };
 
-  const handleFileDownload = async (downloadUrl: string, filename: string) => {
-    try {
-      if (!downloadUrl || !downloadUrl.startsWith('http')) {
-        setError('URL download tidak valid');
-        return;
-      }
+    // Use fetch dengan timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik timeout
 
-      // Show loading for download
-      const downloadBtn = document.getElementById('download-btn');
-      if (downloadBtn) {
-        downloadBtn.innerHTML = '⬇️ Mengunduh...';
-        downloadBtn.setAttribute('disabled', 'true');
-      }
+    const response = await fetch(downloadUrl, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
 
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('Failed to fetch media');
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-
-      // Reset button
-      if (downloadBtn) {
-        downloadBtn.innerHTML = '⬇️ Download Ulang';
-        downloadBtn.removeAttribute('disabled');
-      }
-
-    } catch (err: any) {
-      console.error('Download error:', err);
-      setError('Gagal mengunduh file: ' + err.message);
-      
-      // Fallback: open in new tab
-      window.open(downloadUrl, '_blank');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
 
+    const blob = await response.blob();
+    
+    // Check if blob is valid
+    if (blob.size === 0) {
+      throw new Error('File yang didownload kosong');
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Cleanup
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 1000);
+
+    // Reset button
+    if (downloadBtn) {
+      downloadBtn.innerHTML = originalText || '⬇️ Download Ulang';
+      downloadBtn.removeAttribute('disabled');
+    }
+
+  } catch (err: any) {
+    console.error('Download error:', err);
+    
+    // Reset button
+    const downloadBtn = document.getElementById('download-btn');
+    if (downloadBtn) {
+      downloadBtn.innerHTML = '⬇️ Download Ulang';
+      downloadBtn.removeAttribute('disabled');
+    }
+
+    if (err.name === 'AbortError') {
+      setError('Download timeout. File terlalu besar atau koneksi lambat.');
+    } else {
+      setError('Gagal mengunduh file: ' + (err.message || 'Unknown error'));
+    }
+    
+    // Fallback: open in new tab
+    console.log('Trying fallback: open in new tab');
+    window.open(downloadUrl, '_blank');
+  }
+};
+  
   const getFilename = (type: string, title?: string) => {
     const baseName = title ? title.replace(/[^a-zA-Z0-9]/g, '_') : 'tiktok';
     const extensions = {
@@ -299,7 +338,10 @@ export default function TikTokDownloader() {
             {downloadData && (
               <div className="card">
                 <div className="success-header">
-                  <div className="success-icon">✅</div>
+                  <div className="success-icon">
+                    {downloadData.type === 'video' ? '🎬' : 
+                    downloadData.type === 'audio' ? '🎵' : '🖼️'}
+                  </div
                   <h3 className="success-title">
                     {downloadData.type === 'video' ? 'Video' : 
                      downloadData.type === 'audio' ? 'Audio' : 'Gambar'} Siap Download!
@@ -312,17 +354,20 @@ export default function TikTokDownloader() {
                   </div>
                 )}
 
-                {downloadData.type === 'audio' && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '20px',
-                    background: 'rgba(0, 242, 234, 0.1)',
-                    borderRadius: '10px',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎵</div>
-                    <p style={{ color: 'white', margin: 0 }}>Audio siap untuk diunduh</p>
-                  </div>
+                {/* Info tentang media yang akan didownload */}
+    <div style={{
+      background: 'rgba(0, 242, 234, 0.1)',
+      padding: '15px',
+      borderRadius: '10px',
+      marginBottom: '20px',
+      textAlign: 'center'
+    }}>
+      <p style={{ color: 'white', margin: 0, fontSize: '14px' }}>
+        <strong>Jenis:</strong> {downloadData.type.toUpperCase()} • 
+        <strong> Format:</strong> {downloadData.type === 'video' ? 'MP4' : 
+                                 downloadData.type === 'audio' ? 'MP3' : 'JPG'}
+      </p>
+    </div>
                 )}
 
                 <div className="action-buttons">
