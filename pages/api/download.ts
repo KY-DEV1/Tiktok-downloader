@@ -143,23 +143,6 @@ async function getTikTokMedia(url: string): Promise<{
         }
         return null;
       }
-    },
-    // API 3: Simple TikTok API
-    {
-      name: 'tikmate',
-      url: `https://api.tikmate.app/api/lookup?url=${encodeURIComponent(url)}`,
-      method: 'GET' as const,
-      parser: (data: any) => {
-        if (data.url) {
-          return {
-            downloadUrl: data.url,
-            thumbnailUrl: data.thumbnail || '',
-            title: data.title || 'TikTok Video',
-            duration: data.duration
-          };
-        }
-        return null;
-      }
     }
   ];
 
@@ -196,4 +179,4 @@ async function getTikTokMedia(url: string): Promise<{
   }
 
   throw new Error('Semua API gagal mengambil data TikTok');
-        }
+}
