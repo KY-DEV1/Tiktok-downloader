@@ -40,37 +40,22 @@ export default function TikTokDownloader() {
     }
   };
 
-  const handleDownloadFile = async (downloadUrl: string, filename: string) => {
-  try {
-    // Download melalui API backend untuk avoid CORS
-    const response = await axios.post('/api/download-file', {
-      url: downloadUrl,
-      filename: filename
-    }, {
-      responseType: 'blob' // Important untuk file binary
-    });
-
-    // Create blob URL dan download
-    const blob = new Blob([response.data]);
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-    a.style.display = 'none';
+  const handleDownloadFile = (downloadUrl: string, filename: string) => {
+    // Solusi SIMPLE - langsung buka di tab baru
+    const newTab = window.open(downloadUrl, '_blank');
     
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    // Cleanup
-    URL.revokeObjectURL(blobUrl);
-    
-  } catch (err: any) {
-    console.error('Download error:', err);
-    setError('Gagal mengunduh file: ' + (err.message || 'Unknown error'));
-  }
-};
-  
+    if (!newTab) {
+      // Jika popup diblokir, buat link download
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      a.target = '_blank';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
@@ -84,7 +69,7 @@ export default function TikTokDownloader() {
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Masukkan URL TikTok (contoh: https://vt.tiktok.com/ZSABC1234/)"
+            placeholder="Masukkan URL TikTok (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
             style={{
               flex: 1,
               padding: '12px',
@@ -178,30 +163,24 @@ export default function TikTokDownloader() {
             </a>
           </div>
 
-          {downloadData.duration && (
-            <p style={{ marginTop: '10px', color: '#666' }}>
-              Durasi: {Math.floor(downloadData.duration / 60)}:{(downloadData.duration % 60).toString().padStart(2, '0')}
+          {downloadData.title && (
+            <p style={{ marginTop: '10px', color: '#666', fontStyle: 'italic' }}>
+              {downloadData.title}
             </p>
           )}
         </div>
       )}
 
       <div style={{ marginTop: '30px', padding: '20px', background: '#f9f9f9', borderRadius: '10px' }}>
-        <h4 style={{ color: '#333', marginBottom: '10px' }}>Cara Penggunaan:</h4>
+        <h4 style={{ color: '#333', marginBottom: '10px' }}>Supported URLs:</h4>
         <ul style={{ color: '#666', lineHeight: '1.6' }}>
-          <li>Salin URL video TikTok dari aplikasi</li>
-          <li>Tempel URL di input di atas</li>
-          <li>Klik tombol Download</li>
-          <li>Pilih format yang diinginkan</li>
-        </ul>
-        
-        <h4 style={{ color: '#333', marginBottom: '10px', marginTop: '15px' }}>Contoh URL yang didukung:</h4>
-        <ul style={{ color: '#666', lineHeight: '1.6' }}>
-          <li>https://vt.tiktok.com/ZSABC1234/</li>
-          <li>https://www.tiktok.com/@username/video/1234567890123456789</li>
-          <li>https://vm.tiktok.com/ZMABC1234/</li>
+          <li>✅ https://vt.tiktok.com/ZSxxxxxxxx/</li>
+          <li>✅ https://vm.tiktok.com/ZMxxxxxxxx/</li>
+          <li>✅ https://www.tiktok.com/@username/video/1234567890123456789</li>
+          <li>✅ https://tiktok.com/@username/video/1234567890123456789</li>
+          <li>✅ https://www.tiktok.com/t/xxxxxxxxxxxxxxxxx/</li>
         </ul>
       </div>
     </div>
   );
-                                       }
+        }
