@@ -41,21 +41,29 @@ export default function TikTokDownloader() {
   };
 
   const handleDownloadFile = (downloadUrl: string, filename: string) => {
-    // Solusi SIMPLE - langsung buka di tab baru
-    const newTab = window.open(downloadUrl, '_blank');
-    
-    if (!newTab) {
-      // Jika popup diblokir, buat link download
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = filename;
-      a.target = '_blank';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  };
+  // Validasi URL sebelum download
+  if (!downloadUrl || !downloadUrl.startsWith('http')) {
+    setError('URL download tidak valid');
+    return;
+  }
+
+  console.log('Downloading:', downloadUrl);
+  
+  // Solusi SIMPLE - langsung buka di tab baru
+  const newTab = window.open(downloadUrl, '_blank');
+  
+  if (!newTab) {
+    // Jika popup diblokir, buat link download
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = filename;
+    a.target = '_blank';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+};
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
