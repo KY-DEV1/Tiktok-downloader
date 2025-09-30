@@ -41,52 +41,36 @@ export default function TikTokDownloader() {
   };
 
   const handleDownloadFile = async (downloadUrl: string, filename: string) => {
-    try {
-      // Validasi URL
-      if (!downloadUrl || !downloadUrl.startsWith('http')) {
-        setError('URL download tidak valid');
-        return;
-      }
+  try {
+    // Download melalui API backend untuk avoid CORS
+    const response = await axios.post('/api/download-file', {
+      url: downloadUrl,
+      filename: filename
+    }, {
+      responseType: 'blob' // Important untuk file binary
+    });
 
-      // Gunakan axios untuk download dengan responseType 'blob'
-      const response = await axios.get(downloadUrl, {
-        responseType: 'blob',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'video/mp4,video/webm,video/*;q=0.9,audio/mp3,audio/*;q=0.8,*/*;q=0.5',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Referer': 'https://www.tiktok.com/',
-          'Origin': 'https://www.tiktok.com'
-        },
-        timeout: 30000
-      });
-
-      // Cek jika response adalah HTML (error)
-      const blob = response.data;
-      if (blob.type.includes('text/html')) {
-        setError('URL download tidak valid atau telah expired');
-        return;
-      }
-
-      // Create blob URL dan download
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      a.style.display = 'none';
-      
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      // Cleanup
-      URL.revokeObjectURL(blobUrl);
-      
-    } catch (err: any) {
-      console.error('Download error:', err);
-      setError('Gagal mengunduh file: ' + (err.message || 'Unknown error'));
-    }
-  };
+    // Create blob URL dan download
+    const blob = new Blob([response.data]);
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    // Cleanup
+    URL.revokeObjectURL(blobUrl);
+    
+  } catch (err: any) {
+    console.error('Download error:', err);
+    setError('Gagal mengunduh file: ' + (err.message || 'Unknown error'));
+  }
+};
+  
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
