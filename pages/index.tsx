@@ -37,7 +37,6 @@ export default function TikTokDownloader() {
       
       if (response.data.success) {
         setDownloadData(response.data.data);
-        // Download akan otomatis trigger via useEffect
       } else {
         setError(response.data.error || 'Gagal mengambil data');
       }
@@ -53,7 +52,6 @@ export default function TikTokDownloader() {
     try {
       console.log('Starting auto download:', downloadUrl);
       
-      // Validasi URL
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
         setError('URL download tidak valid');
         return;
@@ -62,7 +60,6 @@ export default function TikTokDownloader() {
       const fileExtension = type === 'video' ? 'mp4' : type === 'audio' ? 'mp3' : 'jpg';
       const filename = `tiktok-${Date.now()}.${fileExtension}`;
 
-      // Method 1: Fetch dan download blob (LEBIH RELIABLE)
       const response = await fetch(downloadUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch video');
@@ -71,7 +68,6 @@ export default function TikTokDownloader() {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
 
-      // Create invisible link dan trigger download
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = filename;
@@ -81,146 +77,431 @@ export default function TikTokDownloader() {
       a.click();
       document.body.removeChild(a);
 
-      // Cleanup
       setTimeout(() => {
         URL.revokeObjectURL(blobUrl);
       }, 1000);
 
-      console.log('Auto download completed');
-
     } catch (err: any) {
       console.error('Auto download error:', err);
-      
-      // FALLBACK: Buka di tab baru
-      console.log('Trying fallback: open in new tab');
       window.open(downloadUrl, '_blank');
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '30px' }}>
-        TikTok Downloader ⚡
-      </h1>
-
-      <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Masukkan URL TikTok (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
-            style={{
-              flex: 1,
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-              fontSize: '16px'
-            }}
-          />
-          <button
-            onClick={handleDownload}
-            disabled={loading}
-            style={{
-              padding: '12px 24px',
-              background: '#ff0050',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            {loading ? 'Memproses...' : 'Download'}
-          </button>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+      padding: '20px'
+    }}>
+      {/* Header */}
+      <div style={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        textAlign: 'center',
+        padding: '40px 20px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '10px'
+        }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            background: 'linear-gradient(45deg, #ff0050, #00f2ea)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            color: 'white',
+            fontWeight: 'bold'
+          }}>
+            ⬇️
+          </div>
+          <h1 style={{
+            fontSize: '3rem',
+            fontWeight: '800',
+            background: 'linear-gradient(45deg, #fff, #e0e7ff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            margin: 0
+          }}>
+            TikTok Downloader
+          </h1>
         </div>
         
-        {error && (
-          <div style={{ 
-            background: '#fee', 
-            color: '#c33', 
-            padding: '10px', 
-            borderRadius: '5px',
-            marginTop: '10px'
+        <p style={{
+          fontSize: '1.2rem',
+          color: 'rgba(255, 255, 255, 0.8)',
+          marginBottom: '40px',
+          fontWeight: '300'
+        }}>
+          Download video TikTok tanpa watermark • Cepat & Gratis
+        </p>
+
+        {/* Input Section */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '20px',
+          padding: '30px',
+          marginBottom: '30px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{
+            display: 'flex',
+            gap: '15px',
+            marginBottom: '15px',
+            flexDirection: { xs: 'column', sm: 'row' }
           }}>
-            {error}
-          </div>
-        )}
-      </div>
-
-      {downloadData && (
-        <div style={{ background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ marginBottom: '15px', color: '#333' }}>✅ Download Berhasil!</h3>
-          
-          {downloadData.thumbnail && (
-            <div style={{ marginBottom: '15px' }}>
-              <img 
-                src={downloadData.thumbnail} 
-                alt="Thumbnail"
-                style={{ 
-                  maxWidth: '100%', 
-                  borderRadius: '5px',
-                  maxHeight: '400px'
-                }}
-              />
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="🔗 Paste URL TikTok di sini (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
               style={{
-                padding: '10px 20px',
-                background: '#00f2ea',
+                flex: 1,
+                padding: '16px 20px',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                outline: 'none',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 1)';
+                e.target.style.transform = 'scale(1.02)';
+              }}
+              onBlur={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.9)';
+                e.target.style.transform = 'scale(1)';
+              }}
+            />
+            <button
+              onClick={handleDownload}
+              disabled={loading}
+              style={{
+                padding: '16px 32px',
+                background: loading 
+                  ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' 
+                  : 'linear-gradient(45deg, #ff0050, #ff0080)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '14px'
+                borderRadius: '12px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '16px',
+                fontWeight: '600',
+                minWidth: '140px',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(255, 0, 80, 0.3)',
+                opacity: loading ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 0, 80, 0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 0, 80, 0.3)';
+                }
               }}
             >
-              ⬇️ Download Ulang
+              {loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid transparent',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  Memproses...
+                </div>
+              ) : (
+                '🚀 Download Now'
+              )}
             </button>
-
-            <a
-              href={downloadData.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: '10px 20px',
-                background: '#333',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '5px',
-                fontSize: '14px'
-              }}
-            >
-              🔗 Buka di Tab Baru
-            </a>
           </div>
-
-          {downloadData.title && (
-            <p style={{ marginTop: '10px', color: '#666', fontStyle: 'italic' }}>
-              {downloadData.title}
-            </p>
+          
+          {error && (
+            <div style={{ 
+              background: 'rgba(255, 100, 100, 0.2)',
+              color: '#ff6b6b',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              marginTop: '15px',
+              border: '1px solid rgba(255, 100, 100, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span>⚠️</span>
+              {error}
+            </div>
           )}
-
-          <p style={{ marginTop: '10px', color: '#00a000', fontSize: '14px' }}>
-            ⚡ Video sedang didownload otomatis...
-          </p>
         </div>
-      )}
 
-      <div style={{ marginTop: '30px', padding: '20px', background: '#f9f9f9', borderRadius: '10px' }}>
-        <h4 style={{ color: '#333', marginBottom: '10px' }}>🎯 Fitur:</h4>
-        <ul style={{ color: '#666', lineHeight: '1.6' }}>
-          <li>✅ <strong>Auto Download</strong> - Langsung download tanpa klik tambahan</li>
-          <li>✅ Support semua URL TikTok (vt, vm, tiktok.com)</li>
-          <li>✅ Download video tanpa watermark</li>
-          <li>✅ Preview thumbnail</li>
-        </ul>
+        {/* Result Section */}
+        {downloadData && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '20px',
+            padding: '30px',
+            marginBottom: '30px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            animation: 'fadeIn 0.5s ease'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: 'linear-gradient(45deg, #00b894, #00cec9)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                color: 'white'
+              }}>
+                ✅
+              </div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                color: 'white',
+                margin: 0
+              }}>
+                Download Berhasil!
+              </h3>
+            </div>
+            
+            {downloadData.thumbnail && (
+              <div style={{
+                marginBottom: '20px',
+                borderRadius: '15px',
+                overflow: 'hidden',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
+              }}>
+                <img 
+                  src={downloadData.thumbnail} 
+                  alt="Thumbnail"
+                  style={{ 
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block'
+                  }}
+                />
+              </div>
+            )}
+
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+              marginBottom: '15px'
+            }}>
+              <button
+                onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
+                style={{
+                  padding: '12px 24px',
+                  background: 'linear-gradient(45deg, #00f2ea, #00b894)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 242, 234, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                ⬇️ Download Ulang
+              </button>
+
+              <a
+                href={downloadData.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                🔗 Buka di Tab Baru
+              </a>
+            </div>
+
+            {downloadData.title && (
+              <p style={{
+                marginTop: '10px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontStyle: 'italic',
+                fontSize: '14px'
+              }}>
+                "{downloadData.title}"
+              </p>
+            )}
+
+            <div style={{
+              marginTop: '15px',
+              padding: '12px',
+              background: 'rgba(0, 242, 234, 0.1)',
+              borderRadius: '10px',
+              border: '1px solid rgba(0, 242, 234, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ color: '#00f2ea' }}>⚡</span>
+              <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px' }}>
+                Video sedang didownload otomatis...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Features Section */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '20px',
+          padding: '30px',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <h3 style={{
+            color: 'white',
+            textAlign: 'center',
+            marginBottom: '25px',
+            fontSize: '1.5rem',
+            fontWeight: '600'
+          }}>
+            🎯 Kenapa Pilih Kami?
+          </h3>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '20px'
+          }}>
+            {[
+              { icon: '🚀', title: 'Super Cepat', desc: 'Proses download dalam hitungan detik' },
+              { icon: '🎨', title: 'HD Quality', desc: 'Video berkualitas tinggi tanpa watermark' },
+              { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' },
+              { icon: '📱', title: 'All Devices', desc: 'Bisa di desktop dan mobile' }
+            ].map((feature, index) => (
+              <div key={index} style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                padding: '20px',
+                borderRadius: '15px',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+              }}>
+                <div style={{
+                  fontSize: '2rem',
+                  marginBottom: '10px'
+                }}>
+                  {feature.icon}
+                </div>
+                <h4 style={{
+                  color: 'white',
+                  margin: '0 0 8px 0',
+                  fontSize: '1.1rem'
+                }}>
+                  {feature.title}
+                </h4>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  margin: 0,
+                  fontSize: '0.9rem'
+                }}>
+                  {feature.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          marginTop: '40px',
+          textAlign: 'center',
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontSize: '14px'
+        }}>
+          <p>© 2025 TikTok Downloader • Made with ❤️ by Ki</p>
+        </div>
       </div>
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+          .container {
+            padding: 20px 15px;
+          }
+          
+          h1 {
+            font-size: 2rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
-                                        }
+    }
