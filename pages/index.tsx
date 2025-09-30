@@ -567,6 +567,117 @@ export default function TikTokDownloader() {
               </div>
             )}
 
-            {/* Features Section */}
+              {/* Features Section */}
             <div className="card">
-              <h3 className="success-title" style={{
+              <h3 className="success-title" style={{ textAlign: 'center', marginBottom: '25px' }}>
+                🎯 Kenapa Pilih Kami?
+              </h3>
+              
+              <div className="features-grid">
+                {[
+                  { icon: '🚀', title: 'Super Cepat', desc: 'Proses download dalam hitungan detik' },
+                  { icon: '🎨', title: 'HD Quality', desc: 'Kualitas terbaik tanpa watermark' },
+                  { icon: '🎵', title: 'Multiple Format', desc: 'Video, audio, dan gambar' },
+                  { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' }
+                ].map((feature, index) => (
+                  <div key={index} className="feature-card">
+                    <div className="feature-icon">{feature.icon}</div>
+                    <h4 className="feature-title">{feature.title}</h4>
+                    <p className="feature-desc">{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* History Sidebar */}
+          {showHistory && (
+            <div className="history-sidebar">
+              <div className="history-header">
+                <h3 className="history-title">📜 Riwayat Download</h3>
+                {downloadHistory.length > 0 && (
+                  <button
+                    onClick={clearHistory}
+                    className="btn-clear"
+                  >
+                    Hapus
+                  </button>
+                )}
+              </div>
+
+              <div className="history-list">
+                {downloadHistory.length === 0 ? (
+                  <div className="history-empty">
+                    📝 Belum ada riwayat download
+                  </div>
+                ) : (
+                  downloadHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="history-item"
+                      onClick={() => window.open(item.url, '_blank')}
+                    >
+                      <div className="history-content">
+                        {item.thumbnail && item.type !== 'audio' && (
+                          <img 
+                            src={item.thumbnail} 
+                            alt="Thumb"
+                            className="history-thumb"
+                          />
+                        )}
+                        {item.type === 'audio' && (
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            background: 'rgba(0, 242, 234, 0.2)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '20px'
+                          }}>
+                            🎵
+                          </div>
+                        )}
+                        <div className="history-details">
+                          <p className="history-item-title">
+                            {item.title}
+                          </p>
+                          <p className="history-time">
+                            {formatTime(item.timestamp)}
+                          </p>
+                          <p className="history-type">
+                            {getMediaIcon(item.type)} {item.type.toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="footer">
+          <p>© 2024 TikTok Downloader • Made with ❤️ for content creators</p>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .selected-media {
+          transform: scale(1.05);
+        }
+        
+        .feature-card {
+          transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+          transform: translateY(-5px);
+        }
+      `}</style>
+    </div>
+  );
+}
