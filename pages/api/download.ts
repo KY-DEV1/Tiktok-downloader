@@ -19,8 +19,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Gunakan API yang lebih reliable
     const result = await getTikTokMedia(cleanUrl);
     
-    if (!result.downloadUrl) {
+    if (!result.downloadUrl && mediaType === 'video') {
       return res.status(404).json({ success: false, error: 'Tidak dapat mengambil media dari URL tersebut' });
+    }
+
+    if (mediaType === 'image' && (!result.images || result.images.length === 0)) {
+      return res.status(404).json({ success: false, error: 'Tidak ada gambar yang ditemukan' });
     }
 
     // Filter berdasarkan media type yang diminta
@@ -41,10 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         title: result.title,
         duration: result.duration
       };
-    } else if (mediaType === 'image' && result.thumbnailUrl) {
+    } else if (mediaType === 'image') {
       finalResult = {
         type: 'image' as const,
-        url: result.thumbnailUrl,
+        images: result.images || [], // Array of all images
         thumbnail: result.thumbnailUrl,
         title: result.title,
         duration: result.duration
@@ -75,6 +79,7 @@ async function getTikTokMedia(url: string): Promise<{
   downloadUrl: string;
   audioUrl?: string;
   thumbnailUrl: string;
+  images?: string[]; // Array untuk multiple images
   title: string;
   duration?: number;
 }> {
@@ -91,6 +96,7 @@ async function getTikTokMedia(url: string): Promise<{
           let downloadUrl = '';
           let audioUrl = '';
           let thumbnailUrl = '';
+          let images: string[] = [];
           
           // Video URL
           if (data.data.play) {
@@ -113,11 +119,19 @@ async function getTikTokMedia(url: string): Promise<{
               : `https://www.tikwm.com${data.data.cover}`;
           }
 
-          if (downloadUrl || audioUrl || thumbnailUrl) {
+          // Multiple Images (slideshow)
+          if (data.data.images && Array.isArray(data.data.images)) {
+            images = data.data.images.map((img: string) => 
+              img.startsWith('http') ? img : `https://www.tikwm.com${img}`
+            );
+          }
+
+          if (downloadUrl || audioUrl || thumbnailUrl || images.length > 0) {
             return {
               downloadUrl: downloadUrl,
               audioUrl: audioUrl,
               thumbnailUrl: thumbnailUrl,
+              images: images,
               title: data.data.title || 'TikTok Video',
               duration: data.data.duration
             };
@@ -126,17 +140,29 @@ async function getTikTokMedia(url: string): Promise<{
         return null;
       }
     },
-    // API 2: Alternative API
+    // API 2: Alternative API untuk images
     {
-      name: 'snaptik',
-      url: `https://snaptik.app/action.php`,
-      method: 'POST' as const,
-      data: { url: url },
+      name: 'tikodl',
+      url: `https://api.tikodl.com/video/?url=${encodeURIComponent(url)}`,
+      method: 'GET' as const,
       parser: (data: any) => {
-        if (data.url) {
+        let downloadUrl = '';
+        let images: string[] = [];
+        
+        if (data.video && data.video.noWatermark) {
+          downloadUrl = data.video.noWatermark;
+        }
+        
+        // Jika ada multiple images
+        if (data.images && Array.isArray(data.images)) {
+          images = data.images;
+        }
+
+        if (downloadUrl || images.length > 0) {
           return {
-            downloadUrl: data.url,
+            downloadUrl: downloadUrl,
             thumbnailUrl: data.thumbnail || '',
+            images: images,
             title: data.title || 'TikTok Video',
             duration: data.duration
           };
@@ -170,6 +196,7 @@ async function getTikTokMedia(url: string): Promise<{
       
       if (result) {
         console.log(`Success with API: ${api.name}`);
+        console.log('Found images:', result.images?.length || 0);
         return result;
       }
     } catch (error: any) {
@@ -179,4 +206,4 @@ async function getTikTokMedia(url: string): Promise<{
   }
 
   throw new Error('Semua API gagal mengambil data TikTok');
-}
+  }
