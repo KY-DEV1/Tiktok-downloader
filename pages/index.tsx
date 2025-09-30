@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface DownloadData {
@@ -15,6 +15,13 @@ export default function TikTokDownloader() {
   const [error, setError] = useState('');
   const [downloadData, setDownloadData] = useState<DownloadData | null>(null);
 
+  // AUTO DOWNLOAD ketika downloadData berubah
+  useEffect(() => {
+    if (downloadData && downloadData.url) {
+      autoDownloadFile(downloadData.url, downloadData.type);
+    }
+  }, [downloadData]);
+
   const handleDownload = async () => {
     if (!url.trim()) {
       setError('Masukkan URL TikTok');
@@ -30,6 +37,7 @@ export default function TikTokDownloader() {
       
       if (response.data.success) {
         setDownloadData(response.data.data);
+        // Download akan otomatis trigger via useEffect
       } else {
         setError(response.data.error || 'Gagal mengambil data');
       }
@@ -40,35 +48,59 @@ export default function TikTokDownloader() {
     }
   };
 
-  const handleDownloadFile = (downloadUrl: string, filename: string) => {
-  // Validasi URL sebelum download
-  if (!downloadUrl || !downloadUrl.startsWith('http')) {
-    setError('URL download tidak valid');
-    return;
-  }
+  // FUNCTION AUTO DOWNLOAD
+  const autoDownloadFile = async (downloadUrl: string, type: 'video' | 'image' | 'audio') => {
+    try {
+      console.log('Starting auto download:', downloadUrl);
+      
+      // Validasi URL
+      if (!downloadUrl || !downloadUrl.startsWith('http')) {
+        setError('URL download tidak valid');
+        return;
+      }
 
-  console.log('Downloading:', downloadUrl);
-  
-  // Solusi SIMPLE - langsung buka di tab baru
-  const newTab = window.open(downloadUrl, '_blank');
-  
-  if (!newTab) {
-    // Jika popup diblokir, buat link download
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = filename;
-    a.target = '_blank';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-};
+      const fileExtension = type === 'video' ? 'mp4' : type === 'audio' ? 'mp3' : 'jpg';
+      const filename = `tiktok-${Date.now()}.${fileExtension}`;
+
+      // Method 1: Fetch dan download blob (LEBIH RELIABLE)
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch video');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create invisible link dan trigger download
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Cleanup
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 1000);
+
+      console.log('Auto download completed');
+
+    } catch (err: any) {
+      console.error('Auto download error:', err);
+      
+      // FALLBACK: Buka di tab baru
+      console.log('Trying fallback: open in new tab');
+      window.open(downloadUrl, '_blank');
+    }
+  };
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ textAlign: 'center', color: '#333', marginBottom: '30px' }}>
-        TikTok Downloader
+        TikTok Downloader ⚡
       </h1>
 
       <div style={{ background: '#f5f5f5', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
@@ -119,7 +151,7 @@ export default function TikTokDownloader() {
 
       {downloadData && (
         <div style={{ background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ marginBottom: '15px', color: '#333' }}>Hasil Download</h3>
+          <h3 style={{ marginBottom: '15px', color: '#333' }}>✅ Download Berhasil!</h3>
           
           {downloadData.thumbnail && (
             <div style={{ marginBottom: '15px' }}>
@@ -137,10 +169,7 @@ export default function TikTokDownloader() {
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
-              onClick={() => handleDownloadFile(
-                downloadData.url, 
-                `tiktok-${Date.now()}.${downloadData.type === 'video' ? 'mp4' : downloadData.type === 'audio' ? 'mp3' : 'jpg'}`
-              )}
+              onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
               style={{
                 padding: '10px 20px',
                 background: '#00f2ea',
@@ -151,7 +180,7 @@ export default function TikTokDownloader() {
                 fontSize: '14px'
               }}
             >
-              Download {downloadData.type === 'video' ? 'Video' : downloadData.type === 'audio' ? 'Audio' : 'Foto'}
+              ⬇️ Download Ulang
             </button>
 
             <a
@@ -167,7 +196,7 @@ export default function TikTokDownloader() {
                 fontSize: '14px'
               }}
             >
-              Buka di Tab Baru
+              🔗 Buka di Tab Baru
             </a>
           </div>
 
@@ -176,19 +205,22 @@ export default function TikTokDownloader() {
               {downloadData.title}
             </p>
           )}
+
+          <p style={{ marginTop: '10px', color: '#00a000', fontSize: '14px' }}>
+            ⚡ Video sedang didownload otomatis...
+          </p>
         </div>
       )}
 
       <div style={{ marginTop: '30px', padding: '20px', background: '#f9f9f9', borderRadius: '10px' }}>
-        <h4 style={{ color: '#333', marginBottom: '10px' }}>Supported URLs:</h4>
+        <h4 style={{ color: '#333', marginBottom: '10px' }}>🎯 Fitur:</h4>
         <ul style={{ color: '#666', lineHeight: '1.6' }}>
-          <li>✅ https://vt.tiktok.com/ZSxxxxxxxx/</li>
-          <li>✅ https://vm.tiktok.com/ZMxxxxxxxx/</li>
-          <li>✅ https://www.tiktok.com/@username/video/1234567890123456789</li>
-          <li>✅ https://tiktok.com/@username/video/1234567890123456789</li>
-          <li>✅ https://www.tiktok.com/t/xxxxxxxxxxxxxxxxx/</li>
+          <li>✅ <strong>Auto Download</strong> - Langsung download tanpa klik tambahan</li>
+          <li>✅ Support semua URL TikTok (vt, vm, tiktok.com)</li>
+          <li>✅ Download video tanpa watermark</li>
+          <li>✅ Preview thumbnail</li>
         </ul>
       </div>
     </div>
   );
-        }
+                                        }
