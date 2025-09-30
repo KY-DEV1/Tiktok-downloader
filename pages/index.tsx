@@ -14,6 +14,19 @@ export default function TikTokDownloader() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [downloadData, setDownloadData] = useState<DownloadData | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile on component mount
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // AUTO DOWNLOAD ketika downloadData berubah
   useEffect(() => {
@@ -106,7 +119,8 @@ export default function TikTokDownloader() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '15px',
-          marginBottom: '10px'
+          marginBottom: '10px',
+          flexDirection: isMobile ? 'column' : 'row'
         }}>
           <div style={{
             width: '50px',
@@ -123,7 +137,7 @@ export default function TikTokDownloader() {
             ⬇️
           </div>
           <h1 style={{
-            fontSize: '3rem',
+            fontSize: isMobile ? '2rem' : '3rem',
             fontWeight: '800',
             background: 'linear-gradient(45deg, #fff, #e0e7ff)',
             WebkitBackgroundClip: 'text',
@@ -135,7 +149,7 @@ export default function TikTokDownloader() {
         </div>
         
         <p style={{
-          fontSize: '1.2rem',
+          fontSize: isMobile ? '1rem' : '1.2rem',
           color: 'rgba(255, 255, 255, 0.8)',
           marginBottom: '40px',
           fontWeight: '300'
@@ -157,7 +171,7 @@ export default function TikTokDownloader() {
             display: 'flex',
             gap: '15px',
             marginBottom: '15px',
-            flexDirection: { xs: 'column', sm: 'row' }
+            flexDirection: isMobile ? 'column' : 'row'
           }}>
             <input
               type="text"
@@ -285,7 +299,7 @@ export default function TikTokDownloader() {
                 ✅
               </div>
               <h3 style={{
-                fontSize: '1.5rem',
+                fontSize: isMobile ? '1.3rem' : '1.5rem',
                 fontWeight: '600',
                 color: 'white',
                 margin: 0
@@ -317,7 +331,8 @@ export default function TikTokDownloader() {
               display: 'flex',
               gap: '12px',
               flexWrap: 'wrap',
-              marginBottom: '15px'
+              marginBottom: '15px',
+              justifyContent: isMobile ? 'center' : 'flex-start'
             }}>
               <button
                 onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
@@ -383,7 +398,8 @@ export default function TikTokDownloader() {
                 marginTop: '10px',
                 color: 'rgba(255, 255, 255, 0.8)',
                 fontStyle: 'italic',
-                fontSize: '14px'
+                fontSize: '14px',
+                textAlign: 'center'
               }}>
                 "{downloadData.title}"
               </p>
@@ -397,7 +413,8 @@ export default function TikTokDownloader() {
               border: '1px solid rgba(0, 242, 234, 0.3)',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px'
+              gap: '10px',
+              justifyContent: 'center'
             }}>
               <span style={{ color: '#00f2ea' }}>⚡</span>
               <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px' }}>
@@ -419,7 +436,7 @@ export default function TikTokDownloader() {
             color: 'white',
             textAlign: 'center',
             marginBottom: '25px',
-            fontSize: '1.5rem',
+            fontSize: isMobile ? '1.3rem' : '1.5rem',
             fontWeight: '600'
           }}>
             🎯 Kenapa Pilih Kami?
@@ -427,7 +444,7 @@ export default function TikTokDownloader() {
           
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '20px'
           }}>
             {[
@@ -476,7 +493,7 @@ export default function TikTokDownloader() {
           color: 'rgba(255, 255, 255, 0.6)',
           fontSize: '14px'
         }}>
-          <p>© 2025 TikTok Downloader • Made with ❤️ by Ki</p>
+          <p>© 2025 TikTok Downloader • Made with ❤️ for content creators</p>
         </div>
       </div>
 
@@ -490,16 +507,6 @@ export default function TikTokDownloader() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @media (max-width: 768px) {
-          .container {
-            padding: 20px 15px;
-          }
-          
-          h1 {
-            font-size: 2rem !important;
-          }
         }
       `}</style>
     </div>
