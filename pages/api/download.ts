@@ -59,7 +59,7 @@ async function getTikTokMedia(url: string): Promise<{
     {
       name: 'tikwm',
       url: `https://www.tikwm.com/api/`,
-      method: 'POST',
+      method: 'POST' as const,
       data: { url: normalizedUrl },
       parser: (data: any) => {
         if (data.data && data.data.play) {
@@ -78,7 +78,7 @@ async function getTikTokMedia(url: string): Promise<{
     {
       name: 'tiktok-downloader',
       url: `https://api.tiktokdownload.org/video/?url=${encodeURIComponent(normalizedUrl)}`,
-      method: 'GET',
+      method: 'GET' as const,
       parser: (data: any) => {
         if (data.video_url) {
           return {
@@ -96,29 +96,12 @@ async function getTikTokMedia(url: string): Promise<{
     {
       name: 'snaptik',
       url: `https://snaptik.app/action.php`,
-      method: 'POST',
+      method: 'POST' as const,
       data: { url: normalizedUrl },
       parser: (data: any) => {
         if (data.url) {
           return {
             downloadUrl: data.url,
-            thumbnailUrl: data.thumbnail || '',
-            title: data.title || 'TikTok Video',
-            type: 'video' as const
-          };
-        }
-        return null;
-      }
-    },
-    // API 4: TikTok API Direct
-    {
-      name: 'tikapi',
-      url: `https://api.tik.tokapi.com/video/?url=${encodeURIComponent(normalizedUrl)}`,
-      method: 'GET',
-      parser: (data: any) => {
-        if (data.video) {
-          return {
-            downloadUrl: data.video,
             thumbnailUrl: data.thumbnail || '',
             title: data.title || 'TikTok Video',
             type: 'video' as const
@@ -155,7 +138,7 @@ async function getTikTokMedia(url: string): Promise<{
         console.log(`Success with API: ${api.name}`);
         return result;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(`API ${api.name} failed:`, error.message);
       continue;
     }
@@ -185,11 +168,11 @@ async function normalizeTikTokUrl(url: string): Promise<string> {
       if (finalUrl && finalUrl.includes('tiktok.com/@')) {
         return finalUrl;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log('Failed to resolve short URL:', error.message);
     }
   }
 
   // Fallback - return original URL
   return url;
-            }
+  }
