@@ -29,40 +29,33 @@ export default function TikTokDownloader() {
   const [showHistory, setShowHistory] = useState(false);
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
 
-  // Load theme and history from localStorage on component mount
+  // Load from localStorage
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     const savedTheme = localStorage.getItem('darkMode');
     const savedHistory = localStorage.getItem('downloadHistory');
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    if (savedTheme !== null) {
-      setDarkMode(JSON.parse(savedTheme));
-    }
-    
-    if (savedHistory) {
-      setDownloadHistory(JSON.parse(savedHistory));
-    }
-    
+    if (savedTheme) setDarkMode(JSON.parse(savedTheme));
+    if (savedHistory) setDownloadHistory(JSON.parse(savedHistory));
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Save theme to localStorage when it changes
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Save history to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('downloadHistory', JSON.stringify(downloadHistory));
   }, [downloadHistory]);
 
-  // AUTO DOWNLOAD ketika downloadData berubah
+  // Auto download
   useEffect(() => {
     if (downloadData && downloadData.url) {
-      // Add to history
       const newHistoryItem: DownloadHistory = {
         id: Date.now().toString(),
         url: downloadData.url,
@@ -72,7 +65,7 @@ export default function TikTokDownloader() {
         type: downloadData.type
       };
       
-      setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]); // Keep last 50 items
+      setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
       autoDownloadFile(downloadData.url, downloadData.type);
     }
   }, [downloadData]);
@@ -105,7 +98,6 @@ export default function TikTokDownloader() {
     }
   };
 
-  // FUNCTION AUTO DOWNLOAD
   const autoDownloadFile = async (downloadUrl: string, type: 'video' | 'image' | 'audio') => {
     try {
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
@@ -147,54 +139,96 @@ export default function TikTokDownloader() {
     return new Date(timestamp).toLocaleString('id-ID');
   };
 
-  // Theme colors
+  // Theme colors - SIMPLIFIED
   const theme = {
     background: darkMode 
       ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' 
       : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    cardBg: darkMode 
-      ? 'rgba(30, 30, 40, 0.8)' 
-      : 'rgba(255, 255, 255, 0.1)',
-    text: darkMode ? 'white' : 'white',
+    cardBg: darkMode ? 'rgba(30, 30, 40, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+    text: 'white',
     textMuted: darkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.8)',
-    border: darkMode 
-      ? '1px solid rgba(255, 255, 255, 0.1)' 
-      : '1px solid rgba(255, 255, 255, 0.2)',
+    border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.2)',
     buttonBg: 'linear-gradient(45deg, #ff0050, #ff0080)',
     successBg: 'linear-gradient(45deg, #00f2ea, #00b894)',
-    secondaryBg: darkMode 
-      ? 'rgba(255, 255, 255, 0.1)' 
-      : 'rgba(255, 255, 255, 0.2)'
+    secondaryBg: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'
+  };
+
+  // SIMPLE STYLES
+  const containerStyle = {
+    minHeight: '100vh',
+    background: theme.background,
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+    padding: '20px',
+    transition: 'all 0.3s ease'
+  };
+
+  const mainContainerStyle = {
+    maxWidth: '1000px',
+    margin: '0 auto',
+    padding: '20px'
+  };
+
+  const topBarStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '30px',
+    flexWrap: 'wrap' as const,
+    gap: '15px'
+  };
+
+  const titleStyle = {
+    fontSize: isMobile ? '1.8rem' : '2.5rem',
+    fontWeight: '800',
+    background: 'linear-gradient(45deg, #fff, #e0e7ff)',
+    WebkitBackgroundClip: 'text' as const,
+    WebkitTextFillColor: 'transparent' as const,
+    margin: 0
+  };
+
+  const cardStyle = {
+    background: theme.cardBg,
+    backdropFilter: 'blur(10px)',
+    borderRadius: '20px',
+    padding: '30px',
+    marginBottom: '30px',
+    border: theme.border,
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+  };
+
+  const inputStyle = {
+    flex: 1,
+    padding: '16px 20px',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '16px',
+    background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
+    color: darkMode ? 'white' : 'black',
+    backdropFilter: 'blur(10px)',
+    outline: 'none',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+  };
+
+  const buttonStyle = {
+    padding: '16px 32px',
+    background: loading ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' : theme.buttonBg,
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: loading ? 'not-allowed' : 'pointer',
+    fontSize: '16px',
+    fontWeight: '600',
+    minWidth: '140px',
+    opacity: loading ? 0.7 : 1
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: theme.background,
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-      padding: '20px',
-      transition: 'all 0.3s ease'
-    }}>
-      <div style={{
-        maxWidth: '1000px',
-        margin: '0 auto',
-        padding: '20px'
-      }}>
-        {/* Top Bar dengan Theme Toggle dan History Button */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '30px',
-          flexWrap: 'wrap',
-          gap: '15px'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '15px',
-            flex: 1
-          }}>
+    <div style={containerStyle}>
+      <div style={mainContainerStyle}>
+        
+        {/* Top Bar */}
+        <div style={topBarStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
             <div style={{
               width: '50px',
               height: '50px',
@@ -209,24 +243,10 @@ export default function TikTokDownloader() {
             }}>
               ⬇️
             </div>
-            <h1 style={{
-              fontSize: isMobile ? '1.8rem' : '2.5rem',
-              fontWeight: '800',
-              background: 'linear-gradient(45deg, #fff, #e0e7ff)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              margin: 0
-            }}>
-              TikTok Downloader
-            </h1>
+            <h1 style={titleStyle}>TikTok Downloader</h1>
           </div>
 
-          <div style={{
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap'
-          }}>
-            {/* History Button */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setShowHistory(!showHistory)}
               style={{
@@ -238,18 +258,15 @@ export default function TikTokDownloader() {
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: '600',
-                transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                backdropFilter: 'blur(10px)'
+                gap: '8px'
               }}
             >
               📜 {showHistory ? 'Sembunyikan' : 'Riwayat'} 
               {downloadHistory.length > 0 && ` (${downloadHistory.length})`}
             </button>
 
-            {/* Theme Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
               style={{
@@ -261,11 +278,9 @@ export default function TikTokDownloader() {
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: '600',
-                transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                backdropFilter: 'blur(10px)',
                 minWidth: '120px'
               }}
             >
@@ -280,6 +295,7 @@ export default function TikTokDownloader() {
           gap: '30px',
           alignItems: 'start'
         }}>
+          
           {/* Main Content */}
           <div>
             <p style={{
@@ -293,15 +309,7 @@ export default function TikTokDownloader() {
             </p>
 
             {/* Input Section */}
-            <div style={{
-              background: theme.cardBg,
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '30px',
-              marginBottom: '30px',
-              border: theme.border,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-            }}>
+            <div style={cardStyle}>
               <div style={{
                 display: 'flex',
                 gap: '15px',
@@ -313,39 +321,12 @@ export default function TikTokDownloader() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="🔗 Paste URL TikTok di sini (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
-                  style={{
-                    flex: 1,
-                    padding: '16px 20px',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
-                    color: darkMode ? 'white' : 'black',
-                    backdropFilter: 'blur(10px)',
-                    outline: 'none',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-                    transition: 'all 0.3s ease'
-                  }}
+                  style={inputStyle}
                 />
                 <button
                   onClick={handleDownload}
                   disabled={loading}
-                  style={{
-                    padding: '16px 32px',
-                    background: loading 
-                      ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' 
-                      : theme.buttonBg,
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    minWidth: '140px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 15px rgba(255, 0, 80, 0.3)',
-                    opacity: loading ? 0.7 : 1
-                  }}
+                  style={buttonStyle}
                 >
                   {loading ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -385,15 +366,7 @@ export default function TikTokDownloader() {
 
             {/* Result Section */}
             {downloadData && (
-              <div style={{
-                background: theme.cardBg,
-                backdropFilter: 'blur(10px)',
-                borderRadius: '20px',
-                padding: '30px',
-                marginBottom: '30px',
-                border: theme.border,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}>
+              <div style={cardStyle}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -446,8 +419,7 @@ export default function TikTokDownloader() {
                   display: 'flex',
                   gap: '12px',
                   flexWrap: 'wrap',
-                  marginBottom: '15px',
-                  justifyContent: isMobile ? 'center' : 'flex-start'
+                  marginBottom: '15px'
                 }}>
                   <button
                     onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
@@ -460,7 +432,6 @@ export default function TikTokDownloader() {
                       cursor: 'pointer',
                       fontSize: '14px',
                       fontWeight: '600',
-                      transition: 'all 0.3s ease',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
@@ -481,7 +452,6 @@ export default function TikTokDownloader() {
                       borderRadius: '10px',
                       fontSize: '14px',
                       fontWeight: '600',
-                      transition: 'all 0.3s ease',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -524,13 +494,7 @@ export default function TikTokDownloader() {
             )}
 
             {/* Features Section */}
-            <div style={{
-              background: theme.cardBg,
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '30px',
-              border: theme.border
-            }}>
+            <div style={cardStyle}>
               <h3 style={{
                 color: theme.text,
                 textAlign: 'center',
@@ -589,4 +553,51 @@ export default function TikTokDownloader() {
               flexDirection: 'column'
             }}>
               <div style={{
-   
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                paddingBottom: '15px',
+                borderBottom: theme.border
+              }}>
+                <h3 style={{ color: theme.text, margin: 0, fontSize: '1.2rem' }}>
+                  📜 Riwayat Download
+                </h3>
+                {downloadHistory.length > 0 && (
+                  <button
+                    onClick={clearHistory}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'rgba(255, 100, 100, 0.2)',
+                      color: '#ff6b6b',
+                      border: '1px solid rgba(255, 100, 100, 0.3)',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Hapus
+                  </button>
+                )}
+              </div>
+
+              <div style={{ overflowY: 'auto', flex: 1 }}>
+                {downloadHistory.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    color: theme.textMuted, 
+                    padding: '40px 20px',
+                    fontSize: '14px'
+                  }}>
+                    📝 Belum ada riwayat download
+                  </div>
+                ) : (
+                  downloadHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
+                        padding: '15px',
+                        borderRadius: '10px',
+                        marginB
