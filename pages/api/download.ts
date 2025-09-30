@@ -6,7 +6,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { url } = req.body;
+  const { url, mediaType = 'video' } = req.body;
 
   if (!url) {
     return res.status(400).json({ success: false, error: 'URL is required' });
@@ -14,18 +14,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const cleanUrl = url.trim();
-    console.log('Processing URL:', cleanUrl);
+    console.log('Processing URL:', cleanUrl, 'Media type:', mediaType);
 
     // Gunakan API yang benar-benar reliable
-    const result = await getTikTokMedia(cleanUrl);
+    const result = await getTikTokMedia(cleanUrl, mediaType);
     
     if (!result.downloadUrl) {
       return res.status(404).json({ success: false, error: 'Tidak dapat mengambil media dari URL tersebut' });
-    }
-
-    // VALIDASI URL sebelum dikirim
-    if (!isValidUrl(result.downloadUrl)) {
-      return res.status(400).json({ success: false, error: 'URL download tidak valid' });
     }
 
     res.json({
@@ -48,18 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// Helper function untuk validasi URL
-function isValidUrl(string: string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-// FUNCTION UTAMA YANG SUPPORT SEMUA LINK TIKTOK
-async function getTikTokMedia(url: string): Promise<{
+// FUNCTION UTAMA YANG SUPPORT SEMUA MEDIA TYPE
+async function getTikTokMedia(url: string, mediaType: string): Promise<{
   downloadUrl: string;
   thumbnailUrl: string;
   title: string;
@@ -68,74 +53,62 @@ async function getTikTokMedia(url: string): Promise<{
 }> {
   
   const apis = [
-    // API 1: TikWM (Paling Reliable) - FIXED URL
+    // API 1: TikWM (Paling Reliable)
     {
       name: 'tikwm',
       url: `https://www.tikwm.com/api/`,
       method: 'POST' as const,
       data: { url: url },
-      parser: (data: any) => {
-        if (data.data && data.data.play) {
-          const downloadUrl = data.data.play.startsWith('http') 
-            ? data.data.play 
-            : `https://www.tikwm.com${data.data.play}`;
-            
-          const thumbnailUrl = data.data.cover 
-            ? (data.data.cover.startsWith('http') 
-                ? data.data.cover 
-                : `https://www.tikwm.com${data.data.cover}`)
-            : '';
+      parser: (data: any, type: string) => {
+        if (data.data) {
+          let downloadUrl = '';
+          let thumbnailUrl = data.data.cover ? `https://www.tikwm.com${data.data.cover}` : '';
+          
+          if (type === 'video' && data.data.play) {
+            downloadUrl = `https://www.tikwm.com${data.data.play}`;
+          } else if (type === 'audio' && data.data.music) {
+            downloadUrl = `https://www.tikwm.com${data.data.music}`;
+          } else if (type === 'image' && data.data.images) {
+            // Untuk images, ambil gambar pertama
+            downloadUrl = `https://www.tikwm.com${data.data.images[0]}`;
+          }
 
+          if (downloadUrl) {
+            return {
+              downloadUrl: downloadUrl,
+              thumbnailUrl: thumbnailUrl,
+              title: data.data.title || 'TikTok Media',
+              type: type as 'video' | 'image' | 'audio',
+              duration: data.data.duration
+            };
+          }
+        }
+        return null;
+      }
+    },
+    // API 2: TikTok Downloader API
+    {
+      name: 'tiktok-downloader',
+      url: `https://api.tiktokdownload.org/video/?url=${encodeURIComponent(url)}`,
+      method: 'GET' as const,
+      parser: (data: any, type: string) => {
+        let downloadUrl = '';
+        
+        if (type === 'video' && data.video_url) {
+          downloadUrl = data.video_url;
+        } else if (type === 'audio' && data.music_url) {
+          downloadUrl = data.music_url;
+        } else if (type === 'image' && data.cover_url) {
+          downloadUrl = data.cover_url;
+        }
+
+        if (downloadUrl) {
           return {
             downloadUrl: downloadUrl,
-            thumbnailUrl: thumbnailUrl,
-            title: data.data.title || 'TikTok Video',
-            type: 'video' as const,
-            duration: data.data.duration
-          };
-        }
-        return null;
-      }
-    },
-    // API 2: TikTokDL - Alternative API
-    {
-      name: 'tikodl',
-      url: `https://api.tikodl.com/video/?url=${encodeURIComponent(url)}`,
-      method: 'GET' as const,
-      parser: (data: any) => {
-        if (data.video && data.video.noWatermark) {
-          return {
-            downloadUrl: data.video.noWatermark,
-            thumbnailUrl: data.video.cover || '',
-            title: data.video.title || 'TikTok Video',
-            type: 'video' as const,
-            duration: data.video.duration
-          };
-        }
-        return null;
-      }
-    },
-    // API 3: Simple TikTok API
-    {
-      name: 'simpletk',
-      url: `https://tiktok-video-no-watermark2.p.rapidapi.com/`,
-      method: 'GET' as const,
-      params: {
-        url: url,
-        hd: '1'
-      },
-      headers: {
-        'X-RapidAPI-Key': 'demo-key', // Free tier
-        'X-RapidAPI-Host': 'tiktok-video-no-watermark2.p.rapidapi.com'
-      },
-      parser: (data: any) => {
-        if (data.data && data.data.play) {
-          return {
-            downloadUrl: data.data.play,
-            thumbnailUrl: data.data.cover || '',
-            title: data.data.title || 'TikTok Video',
-            type: 'video' as const,
-            duration: data.data.duration
+            thumbnailUrl: data.cover_url || '',
+            title: data.title || 'TikTok Media',
+            type: type as 'video' | 'image' | 'audio',
+            duration: data.duration
           };
         }
         return null;
@@ -145,7 +118,7 @@ async function getTikTokMedia(url: string): Promise<{
 
   for (const api of apis) {
     try {
-      console.log(`Trying API: ${api.name}`);
+      console.log(`Trying API: ${api.name} for ${mediaType}`);
       
       const config: any = {
         method: api.method,
@@ -157,23 +130,15 @@ async function getTikTokMedia(url: string): Promise<{
         }
       };
 
-      // Tambahkan headers khusus jika ada
-      if (api.headers) {
-        config.headers = { ...config.headers, ...api.headers };
-      }
-
-      // Tambahkan params untuk GET atau data untuk POST
-      if (api.method === 'GET' && api.params) {
-        config.params = api.params;
-      } else if (api.method === 'POST' && api.data) {
+      if (api.method === 'POST' && api.data) {
         config.data = new URLSearchParams(api.data);
         config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       }
 
       const response = await axios(config);
-      const result = api.parser(response.data);
+      const result = api.parser(response.data, mediaType);
       
-      if (result && isValidUrl(result.downloadUrl)) {
+      if (result) {
         console.log(`Success with API: ${api.name}`);
         return result;
       }
@@ -183,38 +148,5 @@ async function getTikTokMedia(url: string): Promise<{
     }
   }
 
-  // FALLBACK: Gunakan service langsung
-  try {
-    const fallbackUrl = await getFallbackDownload(url);
-    if (fallbackUrl) {
-      return {
-        downloadUrl: fallbackUrl,
-        thumbnailUrl: '',
-        title: 'TikTok Video',
-        type: 'video' as const
-      };
-    }
-  } catch (error) {
-    console.log('Fallback also failed');
-  }
-
-  throw new Error('Tidak dapat mengambil video. Coba dengan URL yang berbeda.');
-}
-
-// FALLBACK METHOD untuk cases emergency
-async function getFallbackDownload(url: string): Promise<string | null> {
-  try {
-    // Method 1: Direct dari TikTok
-    const response = await axios.get(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
-    if (response.data && response.data.html) {
-      // Extract video ID dari HTML
-      const videoIdMatch = response.data.html.match(/video\/(\d+)/);
-      if (videoIdMatch) {
-        return `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
-      }
-    }
-  } catch (error) {
-    console.log('Fallback method failed');
-  }
-  return null;
-      }
+  throw new Error(`Tidak dapat mengambil ${mediaType} dari URL tersebut`);
+        }
