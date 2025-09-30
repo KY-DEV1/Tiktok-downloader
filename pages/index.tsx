@@ -175,7 +175,6 @@ export default function TikTokDownloader() {
       padding: '20px',
       transition: 'all 0.3s ease'
     }}>
-      {/* Header */}
       <div style={{
         maxWidth: '1000px',
         margin: '0 auto',
@@ -245,16 +244,6 @@ export default function TikTokDownloader() {
                 gap: '8px',
                 backdropFilter: 'blur(10px)'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.background = darkMode 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.background = theme.secondaryBg;
-              }}
             >
               📜 {showHistory ? 'Sembunyikan' : 'Riwayat'} 
               {downloadHistory.length > 0 && ` (${downloadHistory.length})`}
@@ -278,16 +267,6 @@ export default function TikTokDownloader() {
                 gap: '8px',
                 backdropFilter: 'blur(10px)',
                 minWidth: '120px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.background = darkMode 
-                  ? 'rgba(255, 255, 255, 0.2)' 
-                  : 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.background = theme.secondaryBg;
               }}
             >
               {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
@@ -347,14 +326,6 @@ export default function TikTokDownloader() {
                     boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
                     transition: 'all 0.3s ease'
                   }}
-                  onFocus={(e) => {
-                    e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 1)';
-                    e.target.style.transform = 'scale(1.02)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.background = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)';
-                    e.target.style.transform = 'scale(1)';
-                  }}
                 />
                 <button
                   onClick={handleDownload}
@@ -374,18 +345,6 @@ export default function TikTokDownloader() {
                     transition: 'all 0.3s ease',
                     boxShadow: '0 4px 15px rgba(255, 0, 80, 0.3)',
                     opacity: loading ? 0.7 : 1
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading) {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 0, 80, 0.4)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!loading) {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 0, 80, 0.3)';
-                    }
                   }}
                 >
                   {loading ? (
@@ -433,8 +392,7 @@ export default function TikTokDownloader() {
                 padding: '30px',
                 marginBottom: '30px',
                 border: theme.border,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                animation: 'fadeIn 0.5s ease'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
               }}>
                 <div style={{
                   display: 'flex',
@@ -507,14 +465,6 @@ export default function TikTokDownloader() {
                       alignItems: 'center',
                       gap: '8px'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 242, 234, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
                   >
                     ⬇️ Download Ulang
                   </button>
@@ -536,16 +486,6 @@ export default function TikTokDownloader() {
                       alignItems: 'center',
                       gap: '8px',
                       border: theme.border
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = darkMode 
-                        ? 'rgba(255, 255, 255, 0.2)' 
-                        : 'rgba(255, 255, 255, 0.3)';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = theme.secondaryBg;
-                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     🔗 Buka di Tab Baru
@@ -571,4 +511,82 @@ export default function TikTokDownloader() {
                   borderRadius: '10px',
                   border: '1px solid rgba(0, 242, 234, 0.3)',
                   display: 'flex',
-                  alignItems: '
+                  alignItems: 'center',
+                  gap: '10px',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: '#00f2ea' }}>⚡</span>
+                  <span style={{ color: theme.text, fontSize: '14px' }}>
+                    Video sedang didownload otomatis...
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Features Section */}
+            <div style={{
+              background: theme.cardBg,
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '30px',
+              border: theme.border
+            }}>
+              <h3 style={{
+                color: theme.text,
+                textAlign: 'center',
+                marginBottom: '25px',
+                fontSize: isMobile ? '1.3rem' : '1.5rem',
+                fontWeight: '600'
+              }}>
+                🎯 Kenapa Pilih Kami?
+              </h3>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '20px'
+              }}>
+                {[
+                  { icon: '🚀', title: 'Super Cepat', desc: 'Proses download dalam hitungan detik' },
+                  { icon: '🎨', title: 'HD Quality', desc: 'Video berkualitas tinggi tanpa watermark' },
+                  { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' },
+                  { icon: '📱', title: 'All Devices', desc: 'Bisa di desktop dan mobile' }
+                ].map((feature, index) => (
+                  <div key={index} style={{
+                    background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
+                    padding: '20px',
+                    borderRadius: '15px',
+                    textAlign: 'center',
+                    border: theme.border
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
+                      {feature.icon}
+                    </div>
+                    <h4 style={{ color: theme.text, margin: '0 0 8px 0', fontSize: '1.1rem' }}>
+                      {feature.title}
+                    </h4>
+                    <p style={{ color: theme.textMuted, margin: 0, fontSize: '0.9rem' }}>
+                      {feature.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* History Sidebar */}
+          {showHistory && (
+            <div style={{
+              background: theme.cardBg,
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '20px',
+              border: theme.border,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{
+   
