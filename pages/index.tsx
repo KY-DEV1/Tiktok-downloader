@@ -132,86 +132,21 @@ export default function TikTokDownloader() {
     return new Date(timestamp).toLocaleString('id-ID');
   };
 
-  // Background colors based on theme
-  const backgroundColor = darkMode 
-    ? 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' 
-    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-
-  const cardBackground = darkMode 
-    ? 'rgba(30, 30, 40, 0.8)' 
-    : 'rgba(255, 255, 255, 0.1)';
-
-  const textColor = 'white';
-  const borderColor = darkMode 
-    ? '1px solid rgba(255, 255, 255, 0.1)' 
-    : '1px solid rgba(255, 255, 255, 0.2)';
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: backgroundColor,
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-      padding: '20px',
-      transition: 'all 0.3s ease'
-    }}>
-      <div style={{
-        maxWidth: '1000px',
-        margin: '0 auto',
-        padding: '20px'
-      }}>
+    <div className={`tiktok-downloader ${darkMode ? 'dark' : 'light'}`}>
+      <div className="container">
         
         {/* Top Bar */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '30px',
-          flexWrap: 'wrap',
-          gap: '15px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
-            <div style={{
-              width: '50px',
-              height: '50px',
-              background: 'linear-gradient(45deg, #ff0050, #00f2ea)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px',
-              color: 'white',
-              fontWeight: 'bold'
-            }}>
-              ⬇️
-            </div>
-            <h1 style={{
-              fontSize: '2.5rem',
-              fontWeight: '800',
-              background: 'linear-gradient(45deg, #fff, #e0e7ff)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              margin: 0
-            }}>
-              TikTok Downloader
-            </h1>
+        <div className="top-bar">
+          <div className="logo">
+            <div className="logo-icon">⬇️</div>
+            <h1 className="title">TikTok Downloader</h1>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="controls">
             <button
               onClick={() => setShowHistory(!showHistory)}
-              style={{
-                padding: '12px 20px',
-                background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-                color: textColor,
-                border: borderColor,
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
+              className="btn btn-secondary"
             >
               📜 {showHistory ? 'Sembunyikan' : 'Riwayat'} 
               {downloadHistory.length > 0 && ` (${downloadHistory.length})`}
@@ -219,105 +154,39 @@ export default function TikTokDownloader() {
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              style={{
-                padding: '12px 20px',
-                background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-                color: textColor,
-                border: borderColor,
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                minWidth: '120px'
-              }}
+              className="btn btn-secondary"
             >
               {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
             </button>
           </div>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: showHistory ? '1fr 350px' : '1fr',
-          gap: '30px',
-          alignItems: 'start'
-        }}>
+        <div className={`main-grid ${showHistory ? 'with-history' : ''}`}>
           
           {/* Main Content */}
-          <div>
-            <p style={{
-              fontSize: '1.1rem',
-              color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '30px',
-              fontWeight: '300',
-              textAlign: 'center'
-            }}>
+          <div className="main-content">
+            <p className="subtitle">
               Download video TikTok tanpa watermark • Cepat & Gratis
             </p>
 
             {/* Input Section */}
-            <div style={{
-              background: cardBackground,
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '30px',
-              marginBottom: '30px',
-              border: borderColor,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{
-                display: 'flex',
-                gap: '15px',
-                marginBottom: '15px',
-                flexDirection: 'row'
-              }}>
+            <div className="card">
+              <div className="input-group">
                 <input
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="🔗 Paste URL TikTok di sini (vt.tiktok.com, vm.tiktok.com, tiktok.com)"
-                  style={{
-                    flex: 1,
-                    padding: '16px 20px',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
-                    color: darkMode ? 'white' : 'black',
-                    outline: 'none'
-                  }}
+                  className={`url-input ${darkMode ? '' : 'light'}`}
                 />
                 <button
                   onClick={handleDownload}
                   disabled={loading}
-                  style={{
-                    padding: '16px 32px',
-                    background: loading 
-                      ? 'linear-gradient(45deg, #ff6b6b, #ee5a24)' 
-                      : 'linear-gradient(45deg, #ff0050, #ff0080)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    minWidth: '140px',
-                    opacity: loading ? 0.7 : 1
-                  }}
+                  className="btn-primary"
                 >
                   {loading ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '16px',
-                        height: '16px',
-                        border: '2px solid transparent',
-                        borderTop: '2px solid white',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }}></div>
+                      <div className="loading-spinner"></div>
                       Memproses...
                     </div>
                   ) : (
@@ -327,17 +196,7 @@ export default function TikTokDownloader() {
               </div>
               
               {error && (
-                <div style={{ 
-                  background: 'rgba(255, 100, 100, 0.2)',
-                  color: '#ff6b6b',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  marginTop: '15px',
-                  border: '1px solid rgba(255, 100, 100, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
+                <div className="error-message">
                   <span>⚠️</span>
                   {error}
                 </div>
@@ -346,84 +205,22 @@ export default function TikTokDownloader() {
 
             {/* Result Section */}
             {downloadData && (
-              <div style={{
-                background: cardBackground,
-                backdropFilter: 'blur(10px)',
-                borderRadius: '20px',
-                padding: '30px',
-                marginBottom: '30px',
-                border: borderColor,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '20px'
-                }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    background: 'linear-gradient(45deg, #00f2ea, #00b894)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '18px',
-                    color: 'white'
-                  }}>
-                    ✅
-                  </div>
-                  <h3 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: '600',
-                    color: textColor,
-                    margin: 0
-                  }}>
-                    Download Berhasil!
-                  </h3>
+              <div className="card">
+                <div className="success-header">
+                  <div className="success-icon">✅</div>
+                  <h3 className="success-title">Download Berhasil!</h3>
                 </div>
                 
                 {downloadData.thumbnail && (
-                  <div style={{
-                    marginBottom: '20px',
-                    borderRadius: '15px',
-                    overflow: 'hidden',
-                    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)'
-                  }}>
-                    <img 
-                      src={downloadData.thumbnail} 
-                      alt="Thumbnail"
-                      style={{ 
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block'
-                      }}
-                    />
+                  <div className="thumbnail">
+                    <img src={downloadData.thumbnail} alt="Thumbnail" />
                   </div>
                 )}
 
-                <div style={{
-                  display: 'flex',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                  marginBottom: '15px'
-                }}>
+                <div className="action-buttons">
                   <button
                     onClick={() => autoDownloadFile(downloadData.url, downloadData.type)}
-                    style={{
-                      padding: '12px 24px',
-                      background: 'linear-gradient(45deg, #00f2ea, #00b894)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
+                    className="btn-success"
                   >
                     ⬇️ Download Ulang
                   </button>
@@ -432,100 +229,42 @@ export default function TikTokDownloader() {
                     href={downloadData.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      padding: '12px 24px',
-                      background: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-                      color: textColor,
-                      textDecoration: 'none',
-                      borderRadius: '10px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      border: borderColor
-                    }}
+                    className="btn btn-secondary"
                   >
                     🔗 Buka di Tab Baru
                   </a>
                 </div>
 
                 {downloadData.title && (
-                  <p style={{
-                    marginTop: '10px',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontStyle: 'italic',
-                    fontSize: '14px',
-                    textAlign: 'center'
-                  }}>
+                  <p className="video-title">
                     "{downloadData.title}"
                   </p>
                 )}
 
-                <div style={{
-                  marginTop: '15px',
-                  padding: '12px',
-                  background: 'rgba(0, 242, 234, 0.1)',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(0, 242, 234, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  justifyContent: 'center'
-                }}>
+                <div className="download-status">
                   <span style={{ color: '#00f2ea' }}>⚡</span>
-                  <span style={{ color: textColor, fontSize: '14px' }}>
-                    Video sedang didownload otomatis...
-                  </span>
+                  <span>Video sedang didownload otomatis...</span>
                 </div>
               </div>
             )}
 
             {/* Features Section */}
-            <div style={{
-              background: cardBackground,
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '30px',
-              border: borderColor
-            }}>
-              <h3 style={{
-                color: textColor,
-                textAlign: 'center',
-                marginBottom: '25px',
-                fontSize: '1.5rem',
-                fontWeight: '600'
-              }}>
+            <div className="card">
+              <h3 className="success-title" style={{ textAlign: 'center', marginBottom: '25px' }}>
                 🎯 Kenapa Pilih Kami?
               </h3>
               
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '20px'
-              }}>
+              <div className="features-grid">
                 {[
                   { icon: '🚀', title: 'Super Cepat', desc: 'Proses download dalam hitungan detik' },
                   { icon: '🎨', title: 'HD Quality', desc: 'Video berkualitas tinggi tanpa watermark' },
                   { icon: '💯', title: 'Gratis', desc: 'Tanpa biaya, tanpa registrasi' },
                   { icon: '📱', title: 'All Devices', desc: 'Bisa di desktop dan mobile' }
                 ].map((feature, index) => (
-                  <div key={index} style={{
-                    background: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.1)',
-                    padding: '20px',
-                    borderRadius: '15px',
-                    textAlign: 'center',
-                    border: borderColor
-                  }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '10px' }}>
-                      {feature.icon}
-                    </div>
-                    <h4 style={{ color: textColor, margin: '0 0 8px 0', fontSize: '1.1rem' }}>
-                      {feature.title}
-                    </h4>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: 0, fontSize: '0.9rem' }}>
-                      {feature.desc}
-                    </p>
+                  <div key={index} className="feature-card">
+                    <div className="feature-icon">{feature.icon}</div>
+                    <h4 className="feature-title">{feature.title}</h4>
+                    <p className="feature-desc">{feature.desc}</p>
                   </div>
                 ))}
               </div>
@@ -534,57 +273,64 @@ export default function TikTokDownloader() {
 
           {/* History Sidebar */}
           {showHistory && (
-            <div style={{
-              background: cardBackground,
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '20px',
-              border: borderColor,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-              maxHeight: '80vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                paddingBottom: '15px',
-                borderBottom: borderColor
-              }}>
-                <h3 style={{ color: textColor, margin: 0, fontSize: '1.2rem' }}>
-                  📜 Riwayat Download
-                </h3>
+            <div className="history-sidebar">
+              <div className="history-header">
+                <h3 className="history-title">📜 Riwayat Download</h3>
                 {downloadHistory.length > 0 && (
                   <button
                     onClick={clearHistory}
-                    style={{
-                      padding: '6px 12px',
-                      background: 'rgba(255, 100, 100, 0.2)',
-                      color: '#ff6b6b',
-                      border: '1px solid rgba(255, 100, 100, 0.3)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}
+                    className="btn-clear"
                   >
                     Hapus
                   </button>
                 )}
               </div>
 
-              <div style={{ overflowY: 'auto', flex: 1 }}>
+              <div className="history-list">
                 {downloadHistory.length === 0 ? (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    color: 'rgba(255, 255, 255, 0.6)', 
-                    padding: '40px 20px',
-                    fontSize: '14px'
-                  }}>
+                  <div className="history-empty">
                     📝 Belum ada riwayat download
                   </div>
                 ) : (
-            
+                  downloadHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="history-item"
+                      onClick={() => window.open(item.url, '_blank')}
+                    >
+                      <div className="history-content">
+                        {item.thumbnail && (
+                          <img 
+                            src={item.thumbnail} 
+                            alt="Thumb"
+                            className="history-thumb"
+                          />
+                        )}
+                        <div className="history-details">
+                          <p className="history-item-title">
+                            {item.title}
+                          </p>
+                          <p className="history-time">
+                            {formatTime(item.timestamp)}
+                          </p>
+                          <p className="history-type">
+                            {item.type.toUpperCase()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="footer">
+          <p>© 2024 TikTok Downloader • Made with ❤️ for content creators</p>
+        </div>
+      </div>
+    </div>
+  );
+  }
