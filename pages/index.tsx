@@ -261,23 +261,29 @@ export default function TikTokDownloader() {
     }
   }
 };
+  
+  // Function untuk download semua images dengan progress
+const downloadAllImages = async (images: string[], title: string) => {
+  try {
+    setDownloadError('');
+    setIsDownloading(true);
 
-  // Function untuk download semua images
-  const downloadAllImages = async (images: string[], title: string) => {
-    try {
-      setDownloadError('');
-      setIsDownloading(true);
+    let successCount = 0;
+    let failedCount = 0;
 
-      for (let i = 0; i < images.length; i++) {
-        const imageUrl = images[i];
-        const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_${i + 1}.jpg`;
-        
+    for (let i = 0; i < images.length; i++) {
+      const imageUrl = images[i];
+      const filename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_gambar_${i + 1}.jpg`;
+      
+      try {
         console.log(`Downloading image ${i + 1}/${images.length}:`, filename);
         
         const response = await fetch(imageUrl);
-        if (!response.ok) throw new Error(`Failed to download image ${i + 1}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const blob = await response.blob();
+        if (blob.size === 0) throw new Error('File kosong');
+
         const blobUrl = URL.createObjectURL(blob);
 
         const a = document.createElement('a');
@@ -292,21 +298,36 @@ export default function TikTokDownloader() {
         // Cleanup
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         
-        // Small delay between downloads
-        if (i < images.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+        successCount++;
+        
+      } catch (err) {
+        console.error(`Failed to download image ${i + 1}:`, err);
+        failedCount++;
       }
-
-      setDownloadError('');
       
-    } catch (err: any) {
-      console.error('Download images error:', err);
-      setDownloadError(`Gagal mengunduh beberapa gambar: ${err.message}`);
-    } finally {
-      setIsDownloading(false);
+      // Small delay between downloads
+      if (i < images.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
-  };
+
+    // Show summary
+    if (failedCount === 0) {
+      setDownloadError('');
+    } else {
+      setDownloadError(
+        `Download selesai: ${successCount} berhasil, ${failedCount} gagal. ` +
+        `Gambar yang gagal bisa didownload manual satu per satu.`
+      );
+    }
+    
+  } catch (err: any) {
+    console.error('Download images error:', err);
+    setDownloadError(`Gagal mengunduh gambar: ${err.message}`);
+  } finally {
+    setIsDownloading(false);
+  }
+};
 
   const getFilename = (type: string, title?: string) => {
     const baseName = title ? title.replace(/[^a-zA-Z0-9]/g, '_') : 'tiktok';
@@ -617,188 +638,253 @@ export default function TikTokDownloader() {
             )}
 
             {/* Result Section untuk Images */}
-            {downloadData && downloadData.type === 'image' && downloadData.images && (
-              <div className="card">
-                <div className="success-header">
-                  <div className="success-icon">
-                    {getMediaIcon(downloadData.type)}
-                  </div>
-                  <div>
-                    <h3 className="success-title">
-                      {downloadData.images.length} Gambar Siap Download!
-                    </h3>
-                    <p style={{ 
-                      color: 'rgba(255, 255, 255, 0.7)', 
-                      fontSize: '14px', 
-                      margin: '5px 0 0 0' 
-                    }}>
-                      Slideshow TikTok dengan {downloadData.images.length} gambar
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Media Info */}
-                <div style={{
-                  background: 'rgba(0, 242, 234, 0.1)',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  marginBottom: '20px'
-                }}>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-                    gap: '10px',
-                    textAlign: 'center'
-                  }}>
-                    <div>
-                      <strong style={{ color: '#00f2ea' }}>Jenis</strong>
-                      <p style={{ color: 'white', margin: '5px 0 0 0' }}>
-                        {downloadData.type.toUpperCase()}
-                      </p>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#00f2ea' }}>Jumlah</strong>
-                      <p style={{ color: 'white', margin: '5px 0 0 0' }}>
-                        {downloadData.images.length} Gambar
-                      </p>
-                    </div>
-                    <div>
-                      <strong style={{ color: '#00f2ea' }}>Format</strong>
-                      <p style={{ color: 'white', margin: '5px 0 0 0' }}>
-                        JPG
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Image Gallery */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '10px',
-                  marginBottom: '20px'
-                }}>
-                  {downloadData.images.map((image, index) => (
-                    <div key={index} style={{
-                      position: 'relative',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
-                      cursor: 'pointer'
-                    }}>
-                      <img 
-                        src={image} 
-                        alt={`Slide ${index + 1}`}
-                        style={{ 
-                          width: '100%',
-                          height: '150px',
-                          objectFit: 'cover',
-                          display: 'block'
-                        }}
-                        onClick={() => window.open(image, '_blank')}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '5px',
-                        right: '5px',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '25px',
-                        height: '25px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: 'bold'
-                      }}>
-                        {index + 1}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+{downloadData && downloadData.type === 'image' && downloadData.images && (
+  <div className="card">
+    <div className="success-header">
+      <div className="success-icon">
+        {getMediaIcon(downloadData.type)}
+      </div>
+      <div>
+        <h3 className="success-title">
+          {downloadData.images.length} Gambar Ditemukan!
+        </h3>
+        <p style={{ 
+          color: 'rgba(255, 255, 255, 0.7)', 
+          fontSize: '14px', 
+          margin: '5px 0 0 0' 
+        }}>
+          Pilih gambar yang ingin didownload
+        </p>
+      </div>
+    </div>
+    
+    {/* Media Info */}
+    <div style={{
+      background: 'rgba(0, 242, 234, 0.1)',
+      padding: '15px',
+      borderRadius: '10px',
+      marginBottom: '20px'
+    }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+        gap: '10px',
+        textAlign: 'center'
+      }}>
+        <div>
+          <strong style={{ color: '#00f2ea' }}>Jenis</strong>
+          <p style={{ color: 'white', margin: '5px 0 0 0' }}>
+            {downloadData.type.toUpperCase()}
+          </p>
+        </div>
+        <div>
+          <strong style={{ color: '#00f2ea' }}>Jumlah</strong>
+          <p style={{ color: 'white', margin: '5px 0 0 0' }}>
+            {downloadData.images.length} Gambar
+          </p>
+        </div>
+        <div>
+          <strong style={{ color: '#00f2ea' }}>Format</strong>
+          <p style={{ color: 'white', margin: '5px 0 0 0' }}>
+            JPG
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    {/* Image Gallery dengan Download Buttons */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      gap: '15px',
+      marginBottom: '20px'
+    }}>
+      {downloadData.images.map((image, index) => (
+        <div key={index} style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '12px',
+          padding: '15px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          textAlign: 'center'
+        }}>
+          {/* Image Preview */}
+          <div style={{
+            position: 'relative',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            marginBottom: '10px',
+            cursor: 'pointer'
+          }}>
+            <img 
+              src={image} 
+              alt={`Slide ${index + 1}`}
+              style={{ 
+                width: '100%',
+                height: '120px',
+                objectFit: 'cover',
+                display: 'block'
+              }}
+              onClick={() => window.open(image, '_blank')}
+            />
+            <div style={{
+              position: 'absolute',
+              top: '5px',
+              left: '5px',
+              background: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              borderRadius: '50%',
+              width: '25px',
+              height: '25px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              {index + 1}
+            </div>
+          </div>
 
-                {/* Download Error Display */}
-                {downloadError && (
-                  <div style={{ 
-                    background: 'rgba(255, 100, 100, 0.2)',
-                    color: '#ff6b6b',
-                    padding: '15px',
-                    borderRadius: '10px',
-                    marginBottom: '20px',
-                    border: '1px solid rgba(255, 100, 100, 0.3)'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                      <span style={{ fontSize: '18px' }}>❌</span>
-                      <div>
-                        <strong style={{ display: 'block', marginBottom: '5px' }}>
-                          Gagal Mengunduh
-                        </strong>
-                        <p style={{ margin: 0, fontSize: '14px' }}>{downloadError}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Download Progress Indicator */}
-                {isDownloading && (
-                  <div style={{
-                    background: 'rgba(0, 242, 234, 0.1)',
-                    padding: '15px',
-                    borderRadius: '10px',
-                    marginBottom: '20px',
-                    border: '1px solid rgba(0, 242, 234, 0.3)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                      <div className="loading-spinner" style={{ width: '20px', height: '20px' }}></div>
-                      <span style={{ color: '#00f2ea', fontWeight: '600' }}>
-                        Sedang mengunduh {downloadData.images.length} gambar...
-                      </span>
-                    </div>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', margin: '10px 0 0 0', fontSize: '12px' }}>
-                      Harap tunggu, semua gambar sedang diproses. Jangan tutup halaman ini.
-                    </p>
-                  </div>
-                )}
-
-                {/* Action Buttons untuk Images */}
-                <div className="action-buttons">
-                  <button
-                    onClick={() => downloadAllImages(downloadData.images!, downloadData.title || 'tiktok')}
-                    className="btn-success"
-                    disabled={isDownloading}
-                  >
-                    {isDownloading ? '⬇️ Mengunduh...' : `⬇️ Download Semua (${downloadData.images.length})`}
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      handleFileDownload(downloadData.images![0], `${downloadData.title || 'tiktok'}_1.jpg`);
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    ⬇️ Download Gambar 1
-                  </button>
-
-                  <a
-                    href={downloadData.images[0]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                  >
-                    🔗 Lihat di Tab Baru
-                  </a>
-                </div>
-
-                {/* Video Title */}
-                {downloadData.title && (
-                  <p className="video-title">
-                    "{downloadData.title}"
-                  </p>
-                )}
-              </div>
+          {/* Download Button untuk Individual Image */}
+          <button
+            onClick={() => handleFileDownload(
+              image, 
+              `${downloadData.title || 'tiktok'}_gambar_${index + 1}.jpg`
             )}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              background: 'linear-gradient(45deg, #00f2ea, #00b894)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px'
+            }}
+          >
+            ⬇️ Download {index + 1}
+          </button>
+
+          {/* Quick View Link */}
+          <button
+            onClick={() => window.open(image, '_blank')}
+            style={{
+              width: '100%',
+              padding: '6px 12px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: 'white',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '11px',
+              marginTop: '5px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px'
+            }}
+          >
+            👁️ Lihat
+          </button>
+        </div>
+      ))}
+    </div>
+
+    {/* Download Error Display */}
+    {downloadError && (
+      <div style={{ 
+        background: 'rgba(255, 100, 100, 0.2)',
+        color: '#ff6b6b',
+        padding: '15px',
+        borderRadius: '10px',
+        marginBottom: '20px',
+        border: '1px solid rgba(255, 100, 100, 0.3)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          <span style={{ fontSize: '18px' }}>❌</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '5px' }}>
+              Gagal Mengunduh
+            </strong>
+            <p style={{ margin: 0, fontSize: '14px' }}>{downloadError}</p>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Download Progress Indicator */}
+    {isDownloading && (
+      <div style={{
+        background: 'rgba(0, 242, 234, 0.1)',
+        padding: '15px',
+        borderRadius: '10px',
+        marginBottom: '20px',
+        border: '1px solid rgba(0, 242, 234, 0.3)',
+        textAlign: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <div className="loading-spinner" style={{ width: '20px', height: '20px' }}></div>
+          <span style={{ color: '#00f2ea', fontWeight: '600' }}>
+            Sedang mengunduh gambar...
+          </span>
+        </div>
+      </div>
+    )}
+
+    {/* Bulk Action Buttons */}
+    <div className="action-buttons" style={{ justifyContent: 'center' }}>
+      <button
+        onClick={() => downloadAllImages(downloadData.images!, downloadData.title || 'tiktok')}
+        className="btn-success"
+        disabled={isDownloading}
+        style={{ minWidth: '200px' }}
+      >
+        {isDownloading ? '⬇️ Mengunduh...' : `⬇️ Download Semua (${downloadData.images.length})`}
+      </button>
+
+      <button
+        onClick={() => {
+          setDownloadData(null);
+          setDownloadError('');
+        }}
+        className="btn btn-secondary"
+        style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+      >
+        ✕ Tutup
+      </button>
+    </div>
+
+    {/* Info Text */}
+    <div style={{
+      textAlign: 'center',
+      marginTop: '15px',
+      padding: '10px',
+      background: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: '8px'
+    }}>
+      <p style={{ 
+        color: 'rgba(255, 255, 255, 0.7)', 
+        margin: 0, 
+        fontSize: '12px' 
+      }}>
+        💡 <strong>Tips:</strong> Klik tombol "Download" di bawah setiap gambar untuk download satu per satu, 
+        atau gunakan "Download Semua" untuk mendapatkan semua gambar sekaligus.
+      </p>
+    </div>
+
+    {/* Video Title */}
+    {downloadData.title && (
+      <p className="video-title">
+        "{downloadData.title}"
+      </p>
+    )}
+  </div>
+)}
 
             {/* Features Section */}
             <div className="card">
