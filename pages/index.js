@@ -72,29 +72,67 @@ export default function TikTokDownloader() {
   }, [downloadHistory]);
 
   const handleDownload = async () => {
-    if (!url.trim()) {
-      setError('Masukkan URL TikTok');
-      return;
-    }
+  if (!url.trim()) {
+    setError('Masukkan URL TikTok');
+    return;
+  }
 
-    setLoading(true);
-    setError('');
-    setDownloadData(null);
-    setDownloadError('');
+  setLoading(true);
+  setError('');
+  setDownloadData(null);
+  setDownloadError('');
 
-    try {
-      const response = await axios.post('/api/download', { 
-        url,
-        mediaType: selectedMedia 
-      });
+  try {
+    const response = await axios.post('/api/download', { 
+      url,
+      mediaType: selectedMedia 
+    });
+    
+    if (response.data.success) {
+      const downloadItem = {
+        ...response.data.data,
+        timestamp: Date.now()
+      };
       
-      if (response.data.success) {
-        const downloadItem = {
-          ...response.data.data,
-          timestamp: Date.now()
-        };
-        
-        setDownloadData(downloadItem);
+      setDownloadData(downloadItem);
+      
+      // Add to history
+      const newHistoryItem = {
+        id: Date.now().toString(),
+        url: downloadItem.images ? downloadItem.images[0] : downloadItem.url,
+        title: downloadItem.title || 'TikTok Media',
+        thumbnail: downloadItem.thumbnail,
+        timestamp: downloadItem.timestamp,
+        type: downloadItem.type
+      };
+      
+      setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
+    } else {
+      // Tampilkan error yang lebih spesifik
+      let errorMessage = response.data.error;
+      if (errorMessage.includes('tidak tersedia')) {
+        errorMessage += '. Coba pilih jenis media lain.';
+      } else if (errorMessage.includes('URL yang berbeda')) {
+        errorMessage += ' Pastikan URL TikTok valid.';
+      }
+      setError(errorMessage);
+    }
+  } catch (err) {
+    console.error('Download error:', err);
+    
+    if (err.code === 'NETWORK_ERROR') {
+      setError('Koneksi internet bermasalah. Cek koneksi Anda.');
+    } else if (err.response?.status === 404) {
+      setError('Video tidak ditemukan. Pastikan URL TikTok valid.');
+    } else if (err.response?.status === 500) {
+      setError('Server sedang sibuk. Coba lagi beberapa saat.');
+    } else {
+      setError('Terjadi kesalahan tidak terduga. Coba refresh halaman.');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
         
         // Add to history
         const newHistoryItem = {
