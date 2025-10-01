@@ -980,7 +980,7 @@ const downloadAllImages = async (images: string[], title: string) => {
 
         {/* Footer */}
         <div className="footer">
-          <p>© 2024 TikTok Downloader • Made with ❤️ for content creators</p>
+          <p>© 2025 TikTok Downloader • Made with Nextjs by Ki</p>
         </div>
       </div>
     </div>
