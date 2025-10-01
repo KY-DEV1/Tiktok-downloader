@@ -143,9 +143,7 @@ export default function TikTokDownloader() {
           timestamp: downloadItem.timestamp,
           type: downloadItem.type
         };
-        
-        setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-      } else {
+      
         setError(response.data.error || 'Gagal mengambil data');
       }
     } catch (err) {
