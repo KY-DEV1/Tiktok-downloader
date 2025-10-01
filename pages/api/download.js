@@ -1,7 +1,6 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -16,7 +15,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cleanUrl = url.trim();
     console.log('Processing URL:', cleanUrl, 'Media type:', mediaType);
 
-    // Gunakan API yang lebih reliable
     const result = await getTikTokMedia(cleanUrl);
     
     if (!result.downloadUrl && mediaType === 'video') {
@@ -27,11 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'Tidak ada gambar yang ditemukan' });
     }
 
-    // Filter berdasarkan media type yang diminta
     let finalResult;
     if (mediaType === 'video') {
       finalResult = {
-        type: 'video' as const,
+        type: 'video',
         url: result.downloadUrl,
         thumbnail: result.thumbnailUrl,
         title: result.title,
@@ -39,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     } else if (mediaType === 'audio' && result.audioUrl) {
       finalResult = {
-        type: 'audio' as const,
+        type: 'audio',
         url: result.audioUrl,
         thumbnail: result.thumbnailUrl,
         title: result.title,
@@ -47,8 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     } else if (mediaType === 'image') {
       finalResult = {
-        type: 'image' as const,
-        images: result.images || [], // Array of all images
+        type: 'image',
+        images: result.images || [],
         thumbnail: result.thumbnailUrl,
         title: result.title,
         duration: result.duration
@@ -65,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: finalResult
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('API Error:', error);
     res.status(500).json({ 
       success: false, 
@@ -74,54 +71,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// FUNCTION UTAMA - Dapatkan semua media yang available
-async function getTikTokMedia(url: string): Promise<{
-  downloadUrl: string;
-  audioUrl?: string;
-  thumbnailUrl: string;
-  images?: string[]; // Array untuk multiple images
-  title: string;
-  duration?: number;
-}> {
-  
+async function getTikTokMedia(url) {
   const apis = [
-    // API 1: TikWM - Support video, audio, dan images
     {
       name: 'tikwm',
       url: `https://www.tikwm.com/api/`,
-      method: 'POST' as const,
+      method: 'POST',
       data: { url: url },
-      parser: (data: any) => {
+      parser: (data) => {
         if (data.data) {
           let downloadUrl = '';
           let audioUrl = '';
           let thumbnailUrl = '';
-          let images: string[] = [];
+          let images = [];
           
-          // Video URL
           if (data.data.play) {
             downloadUrl = data.data.play.startsWith('http') 
               ? data.data.play 
               : `https://www.tikwm.com${data.data.play}`;
           }
           
-          // Audio URL
           if (data.data.music) {
             audioUrl = data.data.music.startsWith('http')
               ? data.data.music
               : `https://www.tikwm.com${data.data.music}`;
           }
           
-          // Thumbnail URL
           if (data.data.cover) {
             thumbnailUrl = data.data.cover.startsWith('http')
               ? data.data.cover
               : `https://www.tikwm.com${data.data.cover}`;
           }
 
-          // Multiple Images (slideshow)
           if (data.data.images && Array.isArray(data.data.images)) {
-            images = data.data.images.map((img: string) => 
+            images = data.data.images.map((img) => 
               img.startsWith('http') ? img : `https://www.tikwm.com${img}`
             );
           }
@@ -139,36 +122,6 @@ async function getTikTokMedia(url: string): Promise<{
         }
         return null;
       }
-    },
-    // API 2: Alternative API untuk images
-    {
-      name: 'tikodl',
-      url: `https://api.tikodl.com/video/?url=${encodeURIComponent(url)}`,
-      method: 'GET' as const,
-      parser: (data: any) => {
-        let downloadUrl = '';
-        let images: string[] = [];
-        
-        if (data.video && data.video.noWatermark) {
-          downloadUrl = data.video.noWatermark;
-        }
-        
-        // Jika ada multiple images
-        if (data.images && Array.isArray(data.images)) {
-          images = data.images;
-        }
-
-        if (downloadUrl || images.length > 0) {
-          return {
-            downloadUrl: downloadUrl,
-            thumbnailUrl: data.thumbnail || '',
-            images: images,
-            title: data.title || 'TikTok Video',
-            duration: data.duration
-          };
-        }
-        return null;
-      }
     }
   ];
 
@@ -176,7 +129,7 @@ async function getTikTokMedia(url: string): Promise<{
     try {
       console.log(`Trying API: ${api.name}`);
       
-      const config: any = {
+      const config = {
         method: api.method,
         url: api.url,
         timeout: 15000,
@@ -196,14 +149,13 @@ async function getTikTokMedia(url: string): Promise<{
       
       if (result) {
         console.log(`Success with API: ${api.name}`);
-        console.log('Found images:', result.images?.length || 0);
         return result;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.log(`API ${api.name} failed:`, error.message);
       continue;
     }
   }
 
   throw new Error('Semua API gagal mengambil data TikTok');
-  }
+        }
