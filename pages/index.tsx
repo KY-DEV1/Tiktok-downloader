@@ -60,6 +60,19 @@ export default function TikTokDownloader() {
     }
   ];
 
+  // Tambahkan di bagian atas component
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Jika di production (Netlify)
+    if (window.location.hostname.includes('netlify.app')) {
+      return window.location.origin;
+    }
+    // Jika di development
+    return '';
+  }
+  return '';
+};
+
   // Helper functions
   const getMediaIcon = (type: string) => {
     switch (type) {
@@ -97,30 +110,32 @@ export default function TikTokDownloader() {
     localStorage.setItem('downloadHistory', JSON.stringify(downloadHistory));
   }, [downloadHistory]);
 
-  const handleDownload = async () => {
-    if (!url.trim()) {
-      setError('Masukkan URL TikTok');
-      return;
-    }
+  // Update handleDownload function
+const handleDownload = async () => {
+  if (!url.trim()) {
+    setError('Masukkan URL TikTok');
+    return;
+  }
 
-    setLoading(true);
-    setError('');
-    setDownloadData(null);
-    setDownloadError('');
+  setLoading(true);
+  setError('');
+  setDownloadData(null);
+  setDownloadError('');
 
-    try {
-      const response = await axios.post('/api/download', { 
-        url,
-        mediaType: selectedMedia 
-      });
-      
-      if (response.data.success) {
-        const downloadItem = {
-          ...response.data.data,
-          timestamp: Date.now()
-        };
-        
-        setDownloadData(downloadItem);
+  try {
+    const apiUrl = getApiUrl();
+    const response = await axios.post(`${apiUrl}/api/download`, { 
+      url,
+      mediaType: selectedMedia 
+    });
+    
+    // ... rest of the function
+  } catch (err: any) {
+    // ... error handling
+  } finally {
+    setLoading(false);
+  }
+};
         
         // Add to history
         const newHistoryItem: DownloadHistory = {
@@ -131,22 +146,7 @@ export default function TikTokDownloader() {
           timestamp: downloadItem.timestamp,
           type: downloadItem.type
         };
-        
-        setDownloadHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-      } else {
-        setError(response.data.error || 'Gagal mengambil data');
-      }
-    } catch (err: any) {
-      console.error('Download error:', err);
-      if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Terjadi kesalahan saat memproses video');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+      
 
   const handleFileDownload = async (downloadUrl: string, filename: string) => {
   let originalText = ''; // Deklarasi variable di luar try-catch
