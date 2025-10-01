@@ -5,25 +5,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "export": "next export",
-    "netlify-build": "npm run build && npm run export",
-    "netlify-dev": "next dev"
+    "export": "next export"
   },
   "dependencies": {
     "next": "^14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "axios": "^1.6.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
-  },
-  "main": "next.config.js",
-  "keywords": [],
-  "author": "KI-DEV1",
-  "license": "ISC",
-  "description": "Tiktok Downloader"
+  }
 }
