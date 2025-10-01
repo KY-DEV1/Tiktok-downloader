@@ -143,21 +143,7 @@ export default function TikTokDownloader() {
           timestamp: downloadItem.timestamp,
           type: downloadItem.type
         };
-      
-        setError(response.data.error || 'Gagal mengambil data');
-      }
-    } catch (err) {
-      console.error('Download error:', err);
-      if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Terjadi kesalahan saat memproses video');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+        
   const handleFileDownload = async (downloadUrl, filename) => {
     try {
       if (!downloadUrl || !downloadUrl.startsWith('http')) {
