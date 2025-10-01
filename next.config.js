@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  trailingSlash: true,
+  images: {
+    domains: ['www.tikwm.com', 'i.pinimg.com', 'p16-sign-va.tiktokcdn.com'],
+    unoptimized: true // Penting untuk static export
+  },
   async headers() {
     return [
       {
@@ -15,5 +20,12 @@ const nextConfig = {
     ];
   },
 };
+
+// Untuk static export di Netlify
+if (process.env.NODE_ENV === 'production') {
+  nextConfig.output = 'export';
+  nextConfig.assetPrefix = './';
+  nextConfig.basePath = '';
+}
 
 module.exports = nextConfig;
